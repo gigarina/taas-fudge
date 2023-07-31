@@ -75,6 +75,7 @@
 #include "tasks/task_ce-pr.cpp"
 #include "tasks/task_se-sst.cpp"
 #include "tasks/task_se-stg.cpp"
+#include "tasks/task_dc-adm.cpp"
 
 /* ============================================================================================================== */
 /* ============================================================================================================== */
@@ -83,6 +84,13 @@ void solve_switch(struct TaskSpecification *task, struct AAF* aaf, struct Labeli
     printf("SAT solver must be specified via -sat <path>.\n");
     exit(0);
   }
+
+  // DC-ADM
+  if(strcmp(task->track,"DC-ADM") == 0){
+    solve_dcadm(task, aaf, grounded);
+    return;
+  }
+
   // DS-PR
   if(strcmp(task->track,"DS-PR") == 0){
     solve_dspr(task, aaf, grounded);
@@ -171,7 +179,7 @@ int main(int argc, char *argv[]){
 	struct SolverInformation *info = taas__solverinformation(
 			"taas-fudge v3.2.8 (2023-03-30)\nMatthias Thimm (matthias.thimm@fernuni-hagen.de), Federico Cerutti (federico.cerutti@unibs.it), Mauro Vallati (m.vallati@hud.ac.uk)",
 			"[i23,tgf]",
-			"[SE-GR,DC-GR,DS-GR,SE-CO,DC-CO,DS-CO,SE-PR,DC-PR,DS-PR,SE-ST,DC-ST,DS-ST,SE-ID,DC-ID,DS-ID,DC-SST,DS-SST,SE-SST,DC-STG,DS-STG,SE-STG]"
+			"[DC-ADM,SE-GR,DC-GR,DS-GR,SE-CO,DC-CO,DS-CO,SE-PR,DC-PR,DS-PR,SE-ST,DC-ST,DS-ST,SE-ID,DC-ID,DS-ID,DC-SST,DS-SST,SE-SST,DC-STG,DS-STG,SE-STG]"
 		);
   return taas__solve(argc,argv,info,solve_switch);
 }
