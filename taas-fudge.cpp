@@ -80,10 +80,10 @@
 /* ============================================================================================================== */
 /* ============================================================================================================== */
 void solve_switch(struct TaskSpecification *task, struct AAF* aaf, struct Labeling* grounded) {
-  if(taas__task_get_value(task,"-sat") == NULL){
-    printf("SAT solver must be specified via -sat <path>.\n");
-    exit(0);
-  }
+  // if(taas__task_get_value(task,"-sat") == NULL){
+  //   printf("SAT solver must be specified via -sat <path>.\n");
+  //   exit(0);
+  // }
 
   // // DC-ADM
   // if(strcmp(task->track,"DC-ADM") == 0){
