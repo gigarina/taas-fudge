@@ -99,72 +99,72 @@ int taas__solve(int argc,
 	    taas__lab_init(grounded,FALSE);
 			taas__compute_grounded(aaf,grounded);
 			// check what queries we can already solve
-			if(strcmp(task->track,"SE-GR") == 0 || strcmp(task->track,"SE-CO") == 0){
-				printf("%s\n", taas__lab_print_i23(grounded,aaf));
-			}else if(strcmp(task->track,"DC-GR") == 0 || strcmp(task->track,"DS-GR") == 0 || strcmp(task->track,"DS-CO") == 0){
-				if(bitset__get(grounded->in,task->arg))
-					printf("YES\n");
-				else printf("NO\n");
-				printf("%s\n", taas__lab_print_i23(grounded,aaf));
-			}else if((strcmp(task->track,"DC-CO") == 0 ||
-								strcmp(task->track,"DC-PR") == 0 ||
-								strcmp(task->track,"DC-SST") == 0 ||
-								strcmp(task->track,"DC-ID") == 0) && bitset__get(grounded->in,task->arg)){
-			  // argument is in the grounded extension
-				// answer is YES for credulous reasoning wrt. all semantics
-				// except possibly stable semantics (as for stage semantics,
-        // since there may be other stage extensions, do not stop here)
-				printf("YES\n");
-				if(PRINT_WITNESS){
-					// for complete semantics, give grounded extension as witness
-					if(strcmp(task->track,"DC-CO") == 0)
-						printf("%s\n", taas__lab_print_i23(grounded,aaf));
-					else{
-						// for all other semantics, just compute any extension
-						if(strcmp(task->track,"DC-PR") == 0)
-							task->track = "SE-PR";
-						else if(strcmp(task->track,"DC-SST") == 0)
-							task->track = "SE-SST";
-						else if(strcmp(task->track,"DC-ID") == 0)
-							task->track = "SE-ID";
-						doSolve(task,aaf,grounded);
-					}
-				}
-			}else if((strcmp(task->track,"DC-CO") == 0 ||
-								strcmp(task->track,"DC-PR") == 0 ||
-								strcmp(task->track,"DC-SST") == 0 ||
-								strcmp(task->track,"DC-ID") == 0 ||
-								strcmp(task->track,"DC-ST") == 0) && bitset__get(grounded->out,task->arg)){
-			  // argument is attacked by the grounded extension
-				// answer is NO for credulous reasoning wrt. all semantics
-				// except possibly stage semantics
-				printf("NO\n");
-			}else if((strcmp(task->track,"DS-PR") == 0 ||
-								strcmp(task->track,"DS-ST") == 0 ||
-								strcmp(task->track,"DS-SST") == 0 ||
-								strcmp(task->track,"DS-ID") == 0) && bitset__get(grounded->in,task->arg)){
-			  // argument is in the grounded extension
-				// answer is YES for skeptical reasoning wrt. all semantics
-				// except possibly stage semantics
-				printf("YES\n");
-			}else if((strcmp(task->track,"DS-PR") == 0 ||
-								strcmp(task->track,"DS-SST") == 0 ||
-								strcmp(task->track,"DS-ID") == 0) && bitset__get(grounded->out,task->arg)){
-			  // argument is attacked by the grounded extension
-				// answer is NO for skeptical reasoning wrt. all semantics
-				// except possibly stable and stage semantics
-				printf("NO\n");
-				if(PRINT_WITNESS){
-						// just compute any extension
-						if(strcmp(task->track,"DS-PR") == 0)
-							task->track = "SE-PR";
-						else if(strcmp(task->track,"DS-SST") == 0)
-							task->track = "SE-SST";
-						else if(strcmp(task->track,"DS-ID") == 0)
-							task->track = "SE-ID";
-						doSolve(task,aaf,grounded);
-				}
-			}else
+		// 	if(strcmp(task->track,"SE-GR") == 0 || strcmp(task->track,"SE-CO") == 0){
+		// 		printf("%s\n", taas__lab_print_i23(grounded,aaf));
+		// 	}else if(strcmp(task->track,"DC-GR") == 0 || strcmp(task->track,"DS-GR") == 0 || strcmp(task->track,"DS-CO") == 0){
+		// 		if(bitset__get(grounded->in,task->arg))
+		// 			printf("YES\n");
+		// 		else printf("NO\n");
+		// 		printf("%s\n", taas__lab_print_i23(grounded,aaf));
+		// 	}else if((strcmp(task->track,"DC-CO") == 0 ||
+		// 						strcmp(task->track,"DC-PR") == 0 ||
+		// 						strcmp(task->track,"DC-SST") == 0 ||
+		// 						strcmp(task->track,"DC-ID") == 0) && bitset__get(grounded->in,task->arg)){
+		// 	  // argument is in the grounded extension
+		// 		// answer is YES for credulous reasoning wrt. all semantics
+		// 		// except possibly stable semantics (as for stage semantics,
+        // // since there may be other stage extensions, do not stop here)
+		// 		printf("YES\n");
+		// 		if(PRINT_WITNESS){
+		// 			// for complete semantics, give grounded extension as witness
+		// 			if(strcmp(task->track,"DC-CO") == 0)
+		// 				printf("%s\n", taas__lab_print_i23(grounded,aaf));
+		// 			else{
+		// 				// for all other semantics, just compute any extension
+		// 				if(strcmp(task->track,"DC-PR") == 0)
+		// 					task->track = "SE-PR";
+		// 				else if(strcmp(task->track,"DC-SST") == 0)
+		// 					task->track = "SE-SST";
+		// 				else if(strcmp(task->track,"DC-ID") == 0)
+		// 					task->track = "SE-ID";
+		// 				doSolve(task,aaf,grounded);
+		// 			}
+		// 		}
+		// 	}else if((strcmp(task->track,"DC-CO") == 0 ||
+		// 						strcmp(task->track,"DC-PR") == 0 ||
+		// 						strcmp(task->track,"DC-SST") == 0 ||
+		// 						strcmp(task->track,"DC-ID") == 0 ||
+		// 						strcmp(task->track,"DC-ST") == 0) && bitset__get(grounded->out,task->arg)){
+		// 	  // argument is attacked by the grounded extension
+		// 		// answer is NO for credulous reasoning wrt. all semantics
+		// 		// except possibly stage semantics
+		// 		printf("NO\n");
+		// 	}else if((strcmp(task->track,"DS-PR") == 0 ||
+		// 						strcmp(task->track,"DS-ST") == 0 ||
+		// 						strcmp(task->track,"DS-SST") == 0 ||
+		// 						strcmp(task->track,"DS-ID") == 0) && bitset__get(grounded->in,task->arg)){
+		// 	  // argument is in the grounded extension
+		// 		// answer is YES for skeptical reasoning wrt. all semantics
+		// 		// except possibly stage semantics
+		// 		printf("YES\n");
+		// 	}else if((strcmp(task->track,"DS-PR") == 0 ||
+		// 						strcmp(task->track,"DS-SST") == 0 ||
+		// 						strcmp(task->track,"DS-ID") == 0) && bitset__get(grounded->out,task->arg)){
+		// 	  // argument is attacked by the grounded extension
+		// 		// answer is NO for skeptical reasoning wrt. all semantics
+		// 		// except possibly stable and stage semantics
+		// 		printf("NO\n");
+		// 		if(PRINT_WITNESS){
+		// 				// just compute any extension
+		// 				if(strcmp(task->track,"DS-PR") == 0)
+		// 					task->track = "SE-PR";
+		// 				else if(strcmp(task->track,"DS-SST") == 0)
+		// 					task->track = "SE-SST";
+		// 				else if(strcmp(task->track,"DS-ID") == 0)
+		// 					task->track = "SE-ID";
+		// 				doSolve(task,aaf,grounded);
+		// 		}
+		// 	}else
       	doSolve(task,aaf,grounded);
 	    taas__lab_destroy(grounded);
 	    taas__aaf_destroy(aaf);

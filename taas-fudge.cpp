@@ -85,11 +85,11 @@ void solve_switch(struct TaskSpecification *task, struct AAF* aaf, struct Labeli
     exit(0);
   }
 
-  // DC-ADM
-  if(strcmp(task->track,"DC-ADM") == 0){
-    solve_dcadm(task, aaf, grounded);
-    return;
-  }
+  // // DC-ADM
+  // if(strcmp(task->track,"DC-ADM") == 0){
+  //   solve_dcadm(task, aaf, grounded);
+  //   return;
+  // }
 
   // DS-PR
   if(strcmp(task->track,"DS-PR") == 0){
@@ -104,7 +104,8 @@ void solve_switch(struct TaskSpecification *task, struct AAF* aaf, struct Labeli
     return solve_eapr(task, aaf, grounded);
   // DC-CO and DC-PR
   if(strcmp(task->track,"DC-CO") == 0 || strcmp(task->track,"DC-PR") == 0){
-    solve_dcco(task, aaf, grounded);
+    //solve_dcco(task, aaf, grounded);
+    solve_dcadm(task, aaf, grounded);
     return;
   }
   // SE-ST
@@ -179,7 +180,9 @@ int main(int argc, char *argv[]){
 	struct SolverInformation *info = taas__solverinformation(
 			"taas-fudge v3.2.8 (2023-03-30)\nMatthias Thimm (matthias.thimm@fernuni-hagen.de), Federico Cerutti (federico.cerutti@unibs.it), Mauro Vallati (m.vallati@hud.ac.uk)",
 			"[i23,tgf]",
-			"[DC-ADM,SE-GR,DC-GR,DS-GR,SE-CO,DC-CO,DS-CO,SE-PR,DC-PR,DS-PR,SE-ST,DC-ST,DS-ST,SE-ID,DC-ID,DS-ID,DC-SST,DS-SST,SE-SST,DC-STG,DS-STG,SE-STG]"
+			// "[DC-ADM,SE-GR,DC-GR,DS-GR,SE-CO,DC-CO,DS-CO,SE-PR,DC-PR,DS-PR,SE-ST,DC-ST,DS-ST,SE-ID,DC-ID,DS-ID,DC-SST,DS-SST,SE-SST,DC-STG,DS-STG,SE-STG]"
+      //"[SE-GR,DC-GR,DS-GR,SE-CO,DC-CO,DS-CO,SE-PR,DC-PR,DS-PR,SE-ST,DC-ST,DS-ST,SE-ID,DC-ID,DS-ID,DC-SST,DS-SST,SE-SST,DC-STG,DS-STG,SE-STG]"
+      "[DC-CO,DC-PR]"
 		);
   return taas__solve(argc,argv,info,solve_switch);
 }
