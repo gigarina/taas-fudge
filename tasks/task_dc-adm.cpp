@@ -17,7 +17,7 @@ Description : solve function for DC-ADM
 // #include "../taas/taas_labeling.c"
 // #include "../util/bitset.c"
 
-const int MAX_IT = 5;
+const int MAX_IT = 200;
 
 void printGSList(GSList* list){
     if(list != NULL){
@@ -172,7 +172,8 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     GSList *bCandidates = NULL;
     for (GSList *current = allAttackers; current != NULL; current = current->next){
-        int currentI = *((int*)current->data);
+        int* currentP = (int*)current->data;
+        int currentI = *currentP;
         bool found1Defender = false;
         for(int i=0; i<(aaf->number_of_arguments); i++){
             int li = taas__lab_get_label(labeling, i);
@@ -185,7 +186,7 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
             }
         }
         if(!found1Defender){
-            bCandidates = g_slist_prepend(bCandidates, GINT_TO_POINTER(new int(currentI)));
+            bCandidates = g_slist_prepend(bCandidates, currentP);
             printf("added %d to bCandidates: ", currentI);
             printGSList(bCandidates);
         }
@@ -216,9 +217,9 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
         if(allConflictingArgs != NULL){ // faster than list length > 0
             for (GSList *current = bAttackers; current != NULL; current = current->next){
                 if(g_slist_find(allConflictingArgs, current) == NULL){
-                    int currentI = *((int*)current->data);
-                    cCandidates = g_slist_prepend(cCandidates, GINT_TO_POINTER(new int(currentI)));
-                    printf("added %d to cCandidates: ", currentI);
+                    int* currentP = (int*)current->data;
+                    cCandidates = g_slist_prepend(cCandidates, currentP);
+                    printf("added %d to cCandidates: ", *currentP);
                     printGSList(cCandidates);
                 }
             }    
