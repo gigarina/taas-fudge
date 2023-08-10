@@ -216,9 +216,6 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
         for (GSList *current = bAttackers; current != NULL; current = current->next){
             if(g_slist_find(allConflictingArgs, current) == NULL){
                 int currentI = *((int*)current->data);
-                // g_slist_free(allConflictingArgs);
-                // printf("RETURNING C: %d \n", currentI);
-                // return currentI;
                 cCandidates = g_slist_prepend(cCandidates, GINT_TO_POINTER(new int(currentI)));
                 printf("added %d to cCandidates: ", currentI);
                 printGSList(cCandidates);
@@ -226,6 +223,8 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
         }    
     }
     g_slist_free(allConflictingArgs);
+    g_slist_free(allAttackers);
+    g_slist_free(allVictims);
     if(cCandidates != NULL){
         int c = getRandomArgument(cCandidates);
         g_slist_free(cCandidates);
