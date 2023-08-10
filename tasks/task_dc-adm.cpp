@@ -204,12 +204,25 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
     if(b != -1){
         printf("findC()\n");
         GSList* bAttackers = g_slist_copy(aaf->parents[b]);
+        if(bAttackers == NULL){
+            printf("NO C FOUND - there is no attacker of B\n");
+            return -1;
+        }
         printf("Attackers of %d : ", b);
         printGSList(bAttackers);
         GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
         GSList* allVictims = getAllVictimsOfLIN(aaf, labeling);
-        GSList* allConflictingArgs = g_slist_concat(allAttackers, allVictims);
-
+        GSList* allConflictingArgs;
+        if(allAttackers == NULL && allVictims == NULL){ // VICTIMS CAN'T BE NULL --> RIGHT??
+            g_slist_free(bAttackers);
+            printf("NO C FOUND - IN has no attackers or victims\n");
+            return -1;
+        }else if (allAttackers == NULL || allVictims == NULL){
+            allConflictingArgs = allAttackers == NULL ? allVictims : allAttackers; 
+         }
+        else{
+            allConflictingArgs  = g_slist_concat(allAttackers, allVictims);
+        }
         GSList* cCandidates = NULL;
         printf("All conflicting args of IN(L):");
         printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
@@ -224,15 +237,20 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
                 }
             }    
         }
+        printf("Free 1 \n");
         g_slist_free(allConflictingArgs);
+       printf("Free 2 : %d\n", *((int*) allAttackers));
         g_slist_free(allAttackers);
+        printf("Free 3 : %d\n", *((int*) allVictims));
         g_slist_free(allVictims);
+        printf("are there Victims?");
         if(cCandidates != NULL){
             int c = getRandomArgument(cCandidates);
             g_slist_free(cCandidates);
             return c;
         }
         printf("NO C FOUND, returning -1\n");
+        printf("Free 4 \n");
         g_slist_free(cCandidates);
     }
     return -1; // <-- TODO this is just a placeholder
