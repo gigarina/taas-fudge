@@ -221,12 +221,18 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
             allConflictingArgs = allAttackers == NULL ? allVictims : allAttackers; 
          }
         else{
-            allConflictingArgs  = g_slist_concat(allAttackers, allVictims);
+            printf("\n -------------> ALL VICTIMS: ");
+            printGSList(allVictims);
+            printf("\n -------------> ALL Attackers: ");
+            printGSList(allAttackers);
+            allConflictingArgs  = g_slist_concat(allAttackers, allVictims); // allConflictingArgs == allAttackers
+            printf("\n -------------> ALL CONFLICTING: ");
+            printGSList(allVictims);
         }
         GSList* cCandidates = NULL;
         printf("All conflicting args of IN(L):");
         printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
-        printGSList(allConflictingArgs);
+        printGSList(allConflictingArgs); // THIS MAKES THE THING CRASH
         if(allConflictingArgs != NULL){ // faster than list length > 0
             for (GSList *current = bAttackers; current != NULL; current = current->next){
                 if(g_slist_find(allConflictingArgs, current) == NULL){
@@ -238,20 +244,24 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
             }    
         }
         printf("Free 1 \n");
-        g_slist_free(allConflictingArgs);
-       printf("Free 2 : %d\n", *((int*) allAttackers));
-        g_slist_free(allAttackers);
-        printf("Free 3 : %d\n", *((int*) allVictims));
-        g_slist_free(allVictims);
-        printf("are there Victims?");
+        if(allConflictingArgs != NULL){
+            g_slist_free(allConflictingArgs);
+        }
+         printf("Free 2 \n");
+    //    if(allAttackers != NULL){
+    //         g_slist_free(allAttackers);
+    //    }
+        printf("Free 3 \n");
+        // if(allVictims!= NULL){
+        //     g_slist_free(allVictims);
+        // }
+         printf("Free 4 \n");
         if(cCandidates != NULL){
             int c = getRandomArgument(cCandidates);
             g_slist_free(cCandidates);
             return c;
         }
         printf("NO C FOUND, returning -1\n");
-        printf("Free 4 \n");
-        g_slist_free(cCandidates);
     }
     return -1; // <-- TODO this is just a placeholder
 }
