@@ -200,38 +200,40 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
 }
 
 int findC(struct AAF *aaf, struct Labeling *labeling, int b){
-    printf("findC()\n");
-    GSList* bAttackers = g_slist_copy(aaf->parents[b]);
-    printf("Attackers of %d : ", b);
-    printGSList(bAttackers);
-    GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
-    GSList* allVictims = getAllVictimsOfLIN(aaf, labeling);
-    GSList* allConflictingArgs = g_slist_concat(allAttackers, allVictims);
+    if(b != -1){
+        printf("findC()\n");
+        GSList* bAttackers = g_slist_copy(aaf->parents[b]);
+        printf("Attackers of %d : ", b);
+        printGSList(bAttackers);
+        GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
+        GSList* allVictims = getAllVictimsOfLIN(aaf, labeling);
+        GSList* allConflictingArgs = g_slist_concat(allAttackers, allVictims);
 
-    GSList* cCandidates = NULL;
-    printf("All conflicting args of IN(L):");
-    printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
-    printGSList(allConflictingArgs);
-    if(allConflictingArgs != NULL){ // faster than list length > 0
-        for (GSList *current = bAttackers; current != NULL; current = current->next){
-            if(g_slist_find(allConflictingArgs, current) == NULL){
-                int currentI = *((int*)current->data);
-                cCandidates = g_slist_prepend(cCandidates, GINT_TO_POINTER(new int(currentI)));
-                printf("added %d to cCandidates: ", currentI);
-                printGSList(cCandidates);
-            }
-        }    
-    }
-    g_slist_free(allConflictingArgs);
-    g_slist_free(allAttackers);
-    g_slist_free(allVictims);
-    if(cCandidates != NULL){
-        int c = getRandomArgument(cCandidates);
+        GSList* cCandidates = NULL;
+        printf("All conflicting args of IN(L):");
+        printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
+        printGSList(allConflictingArgs);
+        if(allConflictingArgs != NULL){ // faster than list length > 0
+            for (GSList *current = bAttackers; current != NULL; current = current->next){
+                if(g_slist_find(allConflictingArgs, current) == NULL){
+                    int currentI = *((int*)current->data);
+                    cCandidates = g_slist_prepend(cCandidates, GINT_TO_POINTER(new int(currentI)));
+                    printf("added %d to cCandidates: ", currentI);
+                    printGSList(cCandidates);
+                }
+            }    
+        }
+        g_slist_free(allConflictingArgs);
+        g_slist_free(allAttackers);
+        g_slist_free(allVictims);
+        if(cCandidates != NULL){
+            int c = getRandomArgument(cCandidates);
+            g_slist_free(cCandidates);
+            return c;
+        }
+        printf("NO C FOUND, returning -1\n");
         g_slist_free(cCandidates);
-        return c;
     }
-     printf("NO C FOUND, returning -1\n");
-     g_slist_free(cCandidates);
     return -1; // <-- TODO this is just a placeholder
 }
 
