@@ -17,7 +17,31 @@ Description : solve function for DC-ADM
 // #include "../taas/taas_labeling.c"
 // #include "../util/bitset.c"
 
-const int MAX_IT = 200;
+const int MAX_IT = 5;
+
+// must be freed with g_slist_free_full
+GSList* getAllXLabeledArgs(struct Labeling* labeling, struct BitSet* inOutBitSet){
+    GSList* xLabeled = NULL;
+    for (int idx = bitset__next_set_bit(inOutBitSet, 0); idx != -1; idx = bitset__next_set_bit(inOutBitSet, idx + 1)) {
+        xLabeled = g_slist_prepend(xLabeled, GINT_TO_POINTER(new int(idx)));
+    }
+    return xLabeled;
+}
+
+// must be freed with g_slist_free_full
+GSList* getAllInLabeledArgs(struct Labeling* labeling){
+    return getAllXLabeledArgs(labeling, labeling->in);
+}
+
+// must be freed with g_slist_free_full
+GSList* getAllOutLabeledArgs(struct Labeling* labeling){
+    return getAllXLabeledArgs(labeling, labeling->out);
+}
+
+void deletePtr(gpointer data){
+    int* intPtr = (int*) data;
+    delete intPtr;
+}
 
 void printGSList(GSList* list){
     if(list != NULL){
@@ -55,24 +79,25 @@ bool conflictFree(struct AAF *aaf, struct Labeling *labeling){ //TODO --> Return
 /* attackers = 1 --> gets attackers */
 /* attackers = 0 --> gets victims */
 GSList* getAllAttackersOrVictimsOfLIN(struct AAF *aaf, struct Labeling *labeling, bool attackers){
-     GSList* allAttackers = NULL;
-     for(int i=0; i<(aaf->number_of_arguments); i++){
-        int li = taas__lab_get_label(labeling, i);
-        if(li==1){
-            GSList* attOrVictim = attackers ? aaf->parents[i] : aaf->children[i];
-            GSList* attackers = g_slist_copy(attOrVictim);
-            if(allAttackers == NULL){
-                allAttackers = attackers;
-                // printf("NOW PRINTING ALL ATTACKERS!\n");
-                //printGSList(allAttackers);
-            }else{
-                // printf("NOW PRINTING ALL ATTACKERS!\n");
-                //printGSList(allAttackers);
-                allAttackers = g_slist_concat(allAttackers, attackers);
-            }
+    // get all inLabeled Args:
+    GSList* inLabeled = getAllInLabeledArgs(labeling);
 
+    GSList* allAttackers = NULL;
+     for(GSList* curr = inLabeled; curr != NULL; curr = curr->next){
+        int i = *((int*) curr->data);
+        GSList* attOrVictim = attackers ? aaf->parents[i] : aaf->children[i];
+        GSList* attackers = g_slist_copy(attOrVictim);
+        if(allAttackers == NULL){
+            allAttackers = attackers;
+            // printf("NOW PRINTING ALL ATTACKERS!\n");
+            //printGSList(allAttackers);
+        }else{
+            // printf("NOW PRINTING ALL ATTACKERS!\n");
+            //printGSList(allAttackers);
+            allAttackers = g_slist_concat(allAttackers, attackers);
         }
      }
+     g_slist_free_full(inLabeled, deletePtr);
      return allAttackers;
 }
 
@@ -315,24 +340,25 @@ GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
 
 bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
     printf("------------AllInAttackersAreOut()\n");
-    GSList* inLabeled = NULL;
+    
     // get all Arguments labeled IN
-    for (int idx = bitset__next_set_bit(labeling->in, 0); idx != -1; idx = bitset__next_set_bit(labeling->in, idx + 1)) {
-        inLabeled = g_slist_prepend(inLabeled, GINT_TO_POINTER(new int(idx)));
-    }
-    GSList* allAttackers = getAllAttackersFromList(aaf, inLabeled);
-    for(GSList* curr = allAttackers; curr != NULL; curr = curr->next){
-        int currentI = *((int*)curr->data);
-        int currLabel = taas__lab_get_label(labeling, currentI);
-        if(currLabel != LAB_OUT){
-            printf("RETURNING FALSE - Argument %d is labeled %d\n", currentI, currLabel);
-            return false;
+    GSList* inLabeled = getAllInLabeledArgs(labeling);
+    if(inLabeled != NULL){
+        GSList* allAttackers = getAllAttackersFromList(aaf, inLabeled);
+        for(GSList* curr = allAttackers; curr != NULL; curr = curr->next){
+            int currentI = *((int*)curr->data);
+            int currLabel = taas__lab_get_label(labeling, currentI);
+            if(currLabel != LAB_OUT){
+                printf("RETURNING FALSE - Argument %d is labeled %d\n", currentI, currLabel);
+                return false;
+            }
         }
-    }
 
-    printf("ALL IN ATTACKERS ARE LABELED OUT - RETURNInG TRUE\n");
-    g_slist_free(inLabeled);
-    g_slist_free(allAttackers);
+        printf("ALL IN ATTACKERS ARE LABELED OUT - RETURNInG TRUE\n");
+        printGSList(inLabeled);
+        g_slist_free_full(inLabeled, deletePtr);
+        g_slist_free(allAttackers);
+    }
     return true; 
 }
 
@@ -358,10 +384,12 @@ bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
         }
         if(!foundOneIn){
             printf("RETURN FALSE - DIDN't find attacker of %d labeled IN\n", currentOut);
+            g_slist_free_full(outLabeled, deletePtr);
             return false;
         }
     }
     printf("RETURNING TRUE \n");
+    g_slist_free_full(outLabeled, deletePtr);
     return true;
 }
 
