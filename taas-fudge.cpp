@@ -53,6 +53,7 @@
 #include "taas/taas_inout.c"
 #include "taas/taas_labeling.c"
 #include "taas/taas_basics.c"
+#include "taas/adm_defended.cpp"
 
 #include "sat/sat_external.cpp"
 
