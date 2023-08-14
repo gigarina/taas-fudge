@@ -247,6 +247,35 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
     return -1;
 }
 
+int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
+    if(b != -1){
+          GSList* bAttackers = g_slist_copy(aaf->parents[b]);
+          if(bAttackers != NULL){
+            GSList* conflictFreeAttackers = NULL;
+            for (GSList *current = bAttackers; current != NULL; current = current->next){
+                int* currentPtr = (int*) current->data;
+                int currentI = *currentPtr;
+                int currentLabel = taas__lab_get_label(labeling, currentI);
+                if(currentLabel == LAB_UNDEC){ // if it's not out it was not defended against yet
+                    conflictFreeAttackers = g_slist_prepend(conflictFreeAttackers, currentPtr);
+                }
+            }
+            if(conflictFreeAttackers != NULL){
+                printf("FINDCFIRST --> CONFLict Free Attackers");
+                printGSList(conflictFreeAttackers);
+                int c = getRandomArgument(conflictFreeAttackers);
+                printf("WE PICKED C: %d \n", c);
+                g_slist_free(conflictFreeAttackers);
+                g_slist_free(bAttackers);
+                return c;
+            }
+            g_slist_free(bAttackers);
+          }
+          
+    }
+    return -1;
+}
+
 int findC(struct AAF *aaf, struct Labeling *labeling, int b){
     if(b != -1){
         printf("findC()\n");
@@ -484,7 +513,8 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
             // //C = Randomly select attacker of B, such that if L(C)= in, L is conflict-free
             // --> find all conflict free candidates
             //getAllConflictFreeArgsForLIN(aaf, labeling);
-            int c = findC(aaf, labeling, b); // --> breaks in second iteration
+            //int c = findC(aaf, labeling, b); 
+            int c = findCFirst(aaf, labeling, b);
             
 
             if (c == -1){
@@ -510,7 +540,10 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
             printf("YES\n");
             return true;
         }
+        taas__lab_destroy(labeling);
+        adm__defended_destroy(defended);
     }
+    // TODO --> FREE LABELING & DEFENDED!!
 
     printf("+++++++ FAILURE +++++++\n");
     printf("Now I can finally work on this properly\n");
