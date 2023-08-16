@@ -43,10 +43,10 @@ void printGSList(GSList* list){
     if(list != NULL){
         for (GSList *current = list; current != NULL; current = current->next){
             int* currentIndex = (int*)current->data;
-            printf("%d -> ", *currentIndex);
+            //printf("%d -> ", *currentIndex);
         }
     }
-    printf("\n");
+    //printf("\n");
 }
 
 
@@ -57,18 +57,18 @@ void printGSList(GSList* list){
 //             GSList* attackers = g_slist_copy(aaf->parents[i]);
 //             for (GSList *current = attackers; current != NULL; current = current->next){
 //                 int* currentIndex = (int*)current->data;
-//                 // printf("Current attacker of %d: %d\n", i,*currentIndex);
+//                 // //printf("Current attacker of %d: %d\n", i,*currentIndex);
 //                 int lcur = taas__lab_get_label(labeling, *currentIndex);
 //                 if(lcur==1){
 //                     g_slist_free(attackers);
-//                     printf("RETURNING FALSE- NOT conflict free: %d attacks %d\n", *currentIndex, i );
+//                     //printf("RETURNING FALSE- NOT conflict free: %d attacks %d\n", *currentIndex, i );
 //                     return false;
 //                 }
 //             }
 //             g_slist_free(attackers);
 //         }
 //     }
-//     printf("RETURNING TRUE - is Conflict Free\n");
+//     //printf("RETURNING TRUE - is Conflict Free\n");
 //     return true;
 // }
 
@@ -85,10 +85,10 @@ GSList* getAllAttackersOrVictimsOfLIN(struct AAF *aaf, struct Labeling *labeling
         GSList* attackers = g_slist_copy(attOrVictim);
         if(allAttackers == NULL){
             allAttackers = attackers;
-            // printf("NOW PRINTING ALL ATTACKERS!\n");
+            // //printf("NOW PRINTING ALL ATTACKERS!\n");
             //printGSList(allAttackers);
         }else{
-            // printf("NOW PRINTING ALL ATTACKERS!\n");
+            // //printf("NOW PRINTING ALL ATTACKERS!\n");
             //printGSList(allAttackers);
             allAttackers = g_slist_concat(allAttackers, attackers);
         }
@@ -106,7 +106,7 @@ GSList* getAllVictimsOfLIN(struct AAF *aaf, struct Labeling *labeling){
 }
 
 GSList* getAllConflictFreeArgsForLIN(struct AAF *aaf, struct Labeling *labeling){
-     printf("getAllConflictFreeArgsForLIN \n");
+     //printf("getAllConflictFreeArgsForLIN \n");
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     GSList* allVictims = getAllVictimsOfLIN(aaf, labeling);
     GSList* allConflictingArgs = g_slist_concat(allAttackers, allVictims);
@@ -114,20 +114,20 @@ GSList* getAllConflictFreeArgsForLIN(struct AAF *aaf, struct Labeling *labeling)
     GSList* conflictFreeArgs = NULL;
    
     for(int i=0; i<(aaf->number_of_arguments); i++){
-        printf("a\n");
+        //printf("a\n");
         gpointer iPtr = GINT_TO_POINTER(i);
-         printf("b\n");
+         //printf("b\n");
         if(g_slist_find(allConflictingArgs, iPtr) == NULL){
-             printf("c\n");
+             //printf("c\n");
             conflictFreeArgs = g_slist_append (conflictFreeArgs, GINT_TO_POINTER (i));
             
         }
     }
     
     if(g_slist_length(conflictFreeArgs)>0){
-       printf("Now returning conflict Free args: ");
+       //printf("Now returning conflict Free args: ");
     }else{
-        printf("NO CONFLICT FREE ARGUMENTS \n");
+        //printf("NO CONFLICT FREE ARGUMENTS \n");
     }
     return conflictFreeArgs;
 
@@ -138,23 +138,23 @@ int getRandomIndex(int listLength){
 }
 
 int getRandomArgument(GSList* list){
-    printf("getRandomArgument!\n");
+    //printf("getRandomArgument!\n");
     if(list != NULL){
         int listLength = g_slist_length(list);
-        printf("List length: %d\n", listLength);
+        //printf("List length: %d\n", listLength);
         int randomIndex = getRandomIndex(listLength);
-        printf("randomIndex: %d\n", randomIndex);
+        //printf("randomIndex: %d\n", randomIndex);
         int randomArgument = *((int*)g_slist_nth_data(list, randomIndex));
-        printf("randomArgument: %d\n", randomArgument);
+        //printf("randomArgument: %d\n", randomArgument);
         return randomArgument;
     }else{
-        printf("Couldn't get random Argument, List is empty\n");
+        //printf("Couldn't get random Argument, List is empty\n");
     }
     return -1;
 }
 
 // int findB(struct AAF *aaf, struct Labeling *labeling){
-//     printf("findB()\n");
+//     //printf("findB()\n");
 //     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
 //     GSList *bCandidates = NULL;
 //     for (GSList *current = allAttackers; current != NULL; current = current->next){
@@ -164,7 +164,7 @@ int getRandomArgument(GSList* list){
 //             int li = taas__lab_get_label(labeling, i);
 //             if(li==1){
 //                 if(taas__aaf_isAttack(aaf,i, currentI)){
-//                     // printf("Current attacker of %d: %d\n", i,*currentIndex);
+//                     // //printf("Current attacker of %d: %d\n", i,*currentIndex);
 //                     found1Defender = true;
 //                     break;
 //                 }
@@ -172,7 +172,7 @@ int getRandomArgument(GSList* list){
 //         }
 //         if(!found1Defender){
 //             bCandidates = g_slist_prepend(bCandidates, GINT_TO_POINTER(new int(currentI)));
-//             printf("added %d to bCandidates: ", currentI);
+//             //printf("added %d to bCandidates: ", currentI);
 //             printGSList(bCandidates);
 //         }
 
@@ -183,14 +183,14 @@ int getRandomArgument(GSList* list){
 //         g_slist_free(bCandidates);
 //         return b;
 //     }
-//     printf("NO B FOUND, returning -1\n");
+//     //printf("NO B FOUND, returning -1\n");
 //     g_slist_free(bCandidates);
 //     return -1;
 // }
 
 // randomly selects an attacker of in(L) and then checks if it's not defended against
 int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended){
-    printf("\n\n\nfindBFirst()\n");
+    //printf("\n\n\nfindBFirst()\n");
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     GSList* undefendedAttackers = NULL;
     for (GSList *current = allAttackers; current != NULL; current = current->next){
@@ -202,20 +202,20 @@ int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgains
     }
 
     if(undefendedAttackers != NULL){
-        printf("ALL undefended Attackers: ");
+        //printf("ALL undefended Attackers: ");
         printGSList(undefendedAttackers);
         int b = getRandomArgument(undefendedAttackers);
         g_slist_free_full(undefendedAttackers, deletePtr);
-        printf("\n\n\n");
+        //printf("\n\n\n");
         return b;
     }else{
-        printf("No undefended Attackers!\n");
+        //printf("No undefended Attackers!\n");
     }
-      printf("\n\n\n");
+      //printf("\n\n\n");
     return -1; 
 }
 int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
-    printf("findBLabeling()\n");
+    //printf("findBLabeling()\n");
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     GSList *bCandidates = NULL;
     for (GSList *current = allAttackers; current != NULL; current = current->next){
@@ -226,7 +226,7 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
             int li = taas__lab_get_label(labeling, i);
             if(li==1){
                 if(taas__aaf_isAttack(aaf,i, currentI)){
-                    // printf("Current attacker of %d: %d\n", i,*currentIndex);
+                    // //printf("Current attacker of %d: %d\n", i,*currentIndex);
                     found1Defender = true;
                     break;
                 }
@@ -234,7 +234,7 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
         }
         if(!found1Defender){
             bCandidates = g_slist_prepend(bCandidates, currentP);
-            printf("added %d to bCandidates: ", currentI);
+            //printf("added %d to bCandidates: ", currentI);
             printGSList(bCandidates);
         }
 
@@ -243,7 +243,7 @@ int findBLabeling(struct AAF *aaf, struct Labeling *labeling){
     if(bCandidates != NULL){
         return getRandomArgument(bCandidates);
     }
-    printf("NO B FOUND, returning -1\n");
+    //printf("NO B FOUND, returning -1\n");
     return -1;
 }
 
@@ -261,10 +261,10 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
                 }
             }
             if(conflictFreeAttackers != NULL){
-                printf("FINDCFIRST --> CONFLict Free Attackers");
+                //printf("FINDCFIRST --> CONFLict Free Attackers");
                 printGSList(conflictFreeAttackers);
                 int c = getRandomArgument(conflictFreeAttackers);
-                printf("WE PICKED C: %d \n", c);
+                //printf("WE PICKED C: %d \n", c);
                 g_slist_free(conflictFreeAttackers);
                 g_slist_free(bAttackers);
                 return c;
@@ -278,66 +278,66 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
 
 int findC(struct AAF *aaf, struct Labeling *labeling, int b){
     if(b != -1){
-        printf("findC()\n");
+        //printf("findC()\n");
         GSList* bAttackers = g_slist_copy(aaf->parents[b]);
         if(bAttackers == NULL){
-            printf("NO C FOUND - there is no attacker of B\n");
+            //printf("NO C FOUND - there is no attacker of B\n");
             return -1;
         }
-        printf("Attackers of %d : ", b);
+        //printf("Attackers of %d : ", b);
         printGSList(bAttackers);
         GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
         GSList* allVictims = getAllVictimsOfLIN(aaf, labeling);
         GSList* allConflictingArgs;
         if(allAttackers == NULL && allVictims == NULL){ // VICTIMS CAN'T BE NULL --> RIGHT??
             g_slist_free(bAttackers);
-            printf("NO C FOUND - IN has no attackers or victims\n");
+            //printf("NO C FOUND - IN has no attackers or victims\n");
             return -1;
         }else if (allAttackers == NULL || allVictims == NULL){
             allConflictingArgs = allAttackers == NULL ? allVictims : allAttackers; 
          }
         else{
-            printf("\n -------------> ALL VICTIMS: ");
+            //printf("\n -------------> ALL VICTIMS: ");
             printGSList(allVictims);
-            printf("\n -------------> ALL Attackers: ");
+            //printf("\n -------------> ALL Attackers: ");
             printGSList(allAttackers);
             allConflictingArgs  = g_slist_concat(allAttackers, allVictims); // allConflictingArgs == allAttackers
-            printf("\n -------------> ALL CONFLICTING: ");
+            //printf("\n -------------> ALL CONFLICTING: ");
             printGSList(allVictims);
         }
         GSList* cCandidates = NULL;
-        printf("All conflicting args of IN(L):");
-        printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
+        //printf("All conflicting args of IN(L):");
+        //printf("%s : ", taas__lab_print_as_labeling(labeling, aaf));
         printGSList(allConflictingArgs); // THIS MAKES THE THING CRASH
         if(allConflictingArgs != NULL){ // faster than list length > 0
             for (GSList *current = bAttackers; current != NULL; current = current->next){
                 if(g_slist_find(allConflictingArgs, current) == NULL){
                     int* currentP = (int*)current->data;
                     cCandidates = g_slist_prepend(cCandidates, currentP);
-                    printf("added %d to cCandidates: ", *currentP);
+                    //printf("added %d to cCandidates: ", *currentP);
                     printGSList(cCandidates);
                 }
             }    
         }
-        printf("Free 1 \n");
+        //printf("Free 1 \n");
         if(allConflictingArgs != NULL){
             g_slist_free(allConflictingArgs);
         }
-         printf("Free 2 \n");
+         //printf("Free 2 \n");
     //    if(allAttackers != NULL){
     //         g_slist_free(allAttackers);
     //    }
-        printf("Free 3 \n");
+        //printf("Free 3 \n");
         // if(allVictims!= NULL){
         //     g_slist_free(allVictims);
         // }
-         printf("Free 4 \n");
+         //printf("Free 4 \n");
         if(cCandidates != NULL){
             int c = getRandomArgument(cCandidates);
             g_slist_free(cCandidates);
             return c;
         }
-        printf("NO C FOUND, returning -1\n");
+        //printf("NO C FOUND, returning -1\n");
     }
     return -1; // <-- TODO this is just a placeholder
 }
@@ -347,13 +347,13 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
    
 //     for (GSList *current = allAttackers; current != NULL; current = current->next){
 //         int currentI = *((int*)current->data);
-//         // printf("This is a normal integer: %d and this is a pointer: %d\n", currentI, *currentIndex);
+//         // //printf("This is a normal integer: %d and this is a pointer: %d\n", currentI, *currentIndex);
 //         bool found1Defender = false;
 //         for(int i=0; i<(aaf->number_of_arguments); i++){
 //             int li = taas__lab_get_label(labeling, i);
 //             if(li==1){
 //                 if(taas__aaf_isAttack(aaf,i, currentI)){
-//                     // printf("Current attacker of %d: %d\n", i,*currentIndex);
+//                     // //printf("Current attacker of %d: %d\n", i,*currentIndex);
 //                     found1Defender = true;
 //                     break;
 //                 }
@@ -361,13 +361,13 @@ int findC(struct AAF *aaf, struct Labeling *labeling, int b){
 //         }
 //         if(!found1Defender){
 //             g_slist_free(allAttackers);
-//             printf("RETURNING FALSE - not Acceptable - There is no Arg in the set defending it against attacker: %d\n", currentI);
+//             //printf("RETURNING FALSE - not Acceptable - There is no Arg in the set defending it against attacker: %d\n", currentI);
 //             return false;
 //         }
 
 //     }
 //     g_slist_free(allAttackers);
-//     printf("RETURNING TRUE- is Acceptable\n");
+//     //printf("RETURNING TRUE- is Acceptable\n");
 //     return true;
 // }
 
@@ -390,7 +390,7 @@ GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
 }
 
 bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
-    printf("------------AllInAttackersAreOut()\n");
+    //printf("------------AllInAttackersAreOut()\n");
     
     // get all Arguments labeled IN
     GSList* inLabeled = getAllInLabeledArgs(labeling);
@@ -400,12 +400,12 @@ bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
             int currentI = *((int*)curr->data);
             int currLabel = taas__lab_get_label(labeling, currentI);
             if(currLabel != LAB_OUT){
-                printf("RETURNING FALSE - Argument %d is labeled %d\n", currentI, currLabel);
+                //printf("RETURNING FALSE - Argument %d is labeled %d\n", currentI, currLabel);
                 return false;
             }
         }
 
-        printf("ALL IN ATTACKERS ARE LABELED OUT - RETURNInG TRUE\n");
+        //printf("ALL IN ATTACKERS ARE LABELED OUT - RETURNInG TRUE\n");
         printGSList(inLabeled);
         g_slist_free_full(inLabeled, deletePtr);
         g_slist_free(allAttackers);
@@ -414,7 +414,7 @@ bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
 }
 
 bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
-    printf("------------allOutHaveOneInAttacker()\n");
+    //printf("------------allOutHaveOneInAttacker()\n");
     GSList* outLabeled = NULL;
     // get all Arguments labeled IN
     for (int idx = bitset__next_set_bit(labeling->out, 0); idx != -1; idx = bitset__next_set_bit(labeling->out, idx + 1)) {
@@ -429,17 +429,17 @@ bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
             int currentAttacker = *((int*)currAtt->data);
             if(taas__lab_get_label(labeling, currentAttacker) == LAB_IN){
                 foundOneIn = true;
-                printf("Found %d attacker of %d labeled IN\n", currentAttacker, currentOut);
+                //printf("Found %d attacker of %d labeled IN\n", currentAttacker, currentOut);
                 break;
             }
         }
         if(!foundOneIn){
-            printf("RETURN FALSE - DIDN't find attacker of %d labeled IN\n", currentOut);
+            //printf("RETURN FALSE - DIDN't find attacker of %d labeled IN\n", currentOut);
             g_slist_free_full(outLabeled, deletePtr);
             return false;
         }
     }
-    printf("RETURNING TRUE \n");
+    //printf("RETURNING TRUE \n");
     g_slist_free_full(outLabeled, deletePtr);
     return true;
 }
@@ -471,10 +471,10 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
 {
     // Element a
     int a = task->arg;
-    printf("This is my Argument: %d \n", a);
+    //printf("This is my Argument: %d \n", a);
     for (int i = 0; i < MAX_IT; i++)
     {
-        printf("+++++++++++++++++++++RUNDE %d+++++++++++++++++++++++\n", i);
+        //printf("+++++++++++++++++++++RUNDE %d+++++++++++++++++++++++\n", i);
         // L <- undec
         // create new labeling as the other one is already set.
         struct Labeling *labeling;
@@ -485,7 +485,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
         // all arguments attacked by initial arguments are out
         bitset__init(labeling->out, aaf->number_of_arguments);
         bitset__unsetAll(labeling->out);
-        printf("printing the Labelling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
+        //printf("printing the Labelling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
         
         // setup Defended Bitset:
         struct DefendedAgainst *defended;
@@ -500,11 +500,11 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
         // taas__lab_set_label(labeling, a, 1);
         labelIn(aaf, labeling, defended, a);
         // taas__lab_set_label(labeling, 1, 1); // stack overflow if ./taas-fudge -p DC-ADM -fo tgf -f complexGraph.tgf -a 4 -sat ./lib
-         printf("AFTER LABELING: printing the Labelling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
-        printf("printing the Defended: %s \n", adm__defended_print(defended, aaf));
+         //printf("AFTER LABELING: printing the Labelling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
+        //printf("printing the Defended: %s \n", adm__defended_print(defended, aaf));
         while (!isAdmissibleLabeling(aaf, labeling))
-        {   printf("-----------------------in While--------------------\n");
-            printf("Got into the while loop with Labeling: %s\n", taas__lab_print_as_labeling(labeling, aaf));
+        {   //printf("-----------------------in While--------------------\n");
+            //printf("Got into the while loop with Labeling: %s\n", taas__lab_print_as_labeling(labeling, aaf));
             // //B = Randomly select attacker of L(in), that no Argument in L(in) defends against
             
             int b = findBFirst(aaf, labeling, defended);
@@ -520,24 +520,24 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
             if (c == -1){
                 break;
             }else{
-                printf("FOUND C: %d\n", c);
+                //printf("FOUND C: %d\n", c);
                labelIn(aaf, labeling, defended, c);
-                printf("updated labeling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
+                //printf("updated labeling: %s \n", taas__lab_print_as_labeling(labeling, aaf));
                 //break;
             }
             //L(C) = in
-            //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf));
+            ////printf("%s\n", taas__lab_print_as_labeling(labeling, aaf));
             //break;
             //isAdmissibleLabeling(aaf, labeling);
-            printf("printing the Defended: %s \n", adm__defended_print(defended, aaf));
-             printf("-----------------------end While--------------------\n");
+            //printf("printing the Defended: %s \n", adm__defended_print(defended, aaf));
+             //printf("-----------------------end While--------------------\n");
              //break;
         }
         if (isAdmissibleLabeling(aaf, labeling))
         {
-            //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf));
-            printf("!!!!! SUCESS!!!!!\n");
-            printf("YES\n");
+            ////printf("%s\n", taas__lab_print_as_labeling(labeling, aaf));
+            //printf("!!!!! SUCESS!!!!!\n");
+            //printf("YES\n");
             return true;
         }
         taas__lab_destroy(labeling);
@@ -545,9 +545,9 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, struct Labelin
     }
     // TODO --> FREE LABELING & DEFENDED!!
 
-    printf("+++++++ FAILURE +++++++\n");
-    printf("Now I can finally work on this properly\n");
-     printf("NO\n");
+    //printf("+++++++ FAILURE +++++++\n");
+    //printf("Now I can finally work on this properly\n");
+     //printf("NO\n");
     return false;
 }
 
