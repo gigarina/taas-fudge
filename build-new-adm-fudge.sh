@@ -1,0 +1,1 @@
+clang++ -O3 -Wno-c++11-compat-deprecated-writable-strings -Wno-deprecated-declarations -Wno-parentheses -Wno-writable-strings -std=c++0x adm-fudge.cpp -o new-adm-fudge `pkg-config --cflags --libs glib-2.0` -lm

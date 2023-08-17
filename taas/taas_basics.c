@@ -89,8 +89,10 @@ int taas__solve(int argc,
 			// check formats
 			if(task->format != NULL && strcmp(task->format,"tgf") == 0)
 				taas__readFile_tgf(task->file,aaf);
-			else
-				taas__readFile_i23(task->file,aaf);
+			// else{
+			// 	printf("This is a i23 File! \n");
+			// 	taas__readFile_i23(task->file,aaf); //--> likely causes Issues
+			// 	}
 			// if DS or DC problem, parse argument under consideration
 			taas__update_arg_param(task,aaf);
 	    // this will hold the grounded extension
