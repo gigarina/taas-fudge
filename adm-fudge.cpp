@@ -33,10 +33,6 @@
 #include "taas/taas_basics.c"
 #include "taas/adm_defended.cpp"
 
-#include "sat/sat_external.cpp"
-
-#include "tasks/task_general.cpp"
-
 #include "tasks/task_dc-adm.cpp"
 
 
