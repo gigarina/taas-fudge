@@ -70,7 +70,7 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
             undefendedAttackers.push_back(currentI);
         }
     }
-
+    g_slist_free_full(allAttackers, deletePtr);
     if (!undefendedAttackers.empty()) {
         int b = getRandomArgumentVector(undefendedAttackers);
         return b;
@@ -158,7 +158,7 @@ bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling, struct Def
             return false;
         }
     }
-    g_slist_free(allInAttackers);
+    g_slist_free_full(allInAttackers, deletePtr);
     
     return true; 
 }

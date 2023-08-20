@@ -102,6 +102,7 @@ void printGSList(GSList* list){
 
 /**
  * @brief Returns a list of all attackers of in(L)
+ * Lists created by this function must be freed with g_slist_free_full.
  * @param aaf
  * @param labeling // i don't think we need this
  * @return A GSList of all attackers of in(L)
@@ -116,6 +117,7 @@ void printGSList(GSList* list){
 //     g_slist_free_full(inL, deletePtr);
 //     return NULL;
 // }
+
 
 GSList* getAllAttackersOfLIN(struct DefendedAgainst* defended){
     return getAllSetArgsFromBitSet(defended->attacks);
