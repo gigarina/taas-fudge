@@ -11,11 +11,12 @@ Description : solve function for DC-ADM
 ============================================================================
 */
 #include <iostream>
+#include <vector>
 #include <glib.h>
 
 #include "../adm_util/adm_basic_util.cpp"
 
-const int MAX_IT = 10;
+const int MAX_IT = 15000000;
 
  
 /**
@@ -25,7 +26,9 @@ const int MAX_IT = 10;
  * @param defended A structure that holds the information about the defence state of in(L)
  * @return An argument that attacks in(L) and is not attacked by in(L). If there is no such argument return -1.
 */
+/*
 int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended){
+    printf("findBFirst\n");
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     GSList* undefendedAttackers = NULL;
     // saves all arguments in undefended Attackers that are not defended against
@@ -36,14 +39,46 @@ int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgains
             undefendedAttackers = g_slist_prepend(undefendedAttackers, GINT_TO_POINTER(new int(currentI)));
         }
     }
-
+    g_slist_free(allAttackers);
     if(undefendedAttackers != NULL){
         int b = getRandomArgument(undefendedAttackers);
         g_slist_free_full(undefendedAttackers, deletePtr);
         return b;
     }
     return -1; 
+}*/
+
+int getRandomArgumentVector(const std::vector<int>& v){
+    if(!v.empty()){
+        int listLength = v.size();
+        int randomIndex = getRandomIndex(listLength);
+        return v[randomIndex];
+    }
+    return -1;
 }
+
+int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended) {
+    GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
+    std::vector<int> undefendedAttackers;
+    undefendedAttackers.reserve(g_slist_length(allAttackers));
+
+    for (GSList *current = allAttackers; current != NULL; current = current->next){
+        int currentI = *((int*) current->data);
+        int isCurrentDefended = adm__defended_get(defended, currentI);
+        if (!isCurrentDefended) {
+            undefendedAttackers.push_back(currentI);
+        }
+    }
+
+    if (!undefendedAttackers.empty()) {
+        int b = getRandomArgumentVector(undefendedAttackers);
+        return b;
+    }
+
+    return -1;
+}
+
+
 
 
 /**
@@ -54,6 +89,7 @@ int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgains
  * @return An argument that attacks b and is not in conflict with in(L). If there is no such argument returns -1.
 */
 int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
+    printf("findCFirst\n");
     if(b != -1){
           GSList* bAttackers = g_slist_copy(aaf->parents[b]);
           if(bAttackers != NULL){
@@ -78,6 +114,31 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
     }
     return -1;
 }
+// int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
+//     printf("findCFirst\n");
+//     if(b != -1){
+//           GSList* bAttackers = aaf->parents[b];
+//           if(bAttackers != NULL){
+//             std::vector<int> conflictFreeAttackers;
+//             conflictFreeAttackers.reserve(g_slist_length(bAttackers));
+//             for (GSList *current = bAttackers; current != NULL; current = current->next){
+//                 int* currentPtr = (int*) current->data;
+//                 int currentI = *currentPtr;
+//                 int currentLabel = taas__lab_get_label(labeling, currentI);
+//                 if(currentLabel == LAB_UNDEC){ // if it's not out it is not in conflict with in(L)
+//                     conflictFreeAttackers.push_back(currentI);
+//                 }
+//             }
+//             g_slist_free(bAttackers);
+//             if(!conflictFreeAttackers.empty()){
+//                 int c = getRandomArgumentVector(conflictFreeAttackers);
+//                 return c;
+//             }
+//           }
+          
+//     }
+//     return -1;
+// }
 
 
 
@@ -89,21 +150,17 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
  * @return True if all attackers of in(L) are labelled out. False otherwise.
 */
 bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
-    // get all Arguments labeled IN
-    GSList* inLabeled = getAllInLabeledArgs(labeling);
-    if(inLabeled != NULL){
-        GSList* allAttackers = getAllAttackersFromList(aaf, inLabeled);
-        for(GSList* curr = allAttackers; curr != NULL; curr = curr->next){
-            int currentI = *((int*)curr->data);
-            int currLabel = taas__lab_get_label(labeling, currentI);
-            if(currLabel != LAB_OUT){
-                return false;
-            }
+    printf("allInAttackersAreOut\n");
+    GSList* allInAttackers = getAllAttackersOfLIN(aaf, labeling);
+    for(GSList* curr = allInAttackers; curr != NULL; curr = curr->next){
+        int currentI = *((int*)curr->data);
+        int currLabel = taas__lab_get_label(labeling, currentI);
+        if(currLabel != LAB_OUT){
+            return false;
         }
-        printGSList(inLabeled);
-        g_slist_free_full(inLabeled, deletePtr);
-        g_slist_free(allAttackers);
     }
+    g_slist_free(allInAttackers);
+    
     return true; 
 }
 
@@ -117,6 +174,7 @@ bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
  * @return True if all out labeled arguments have at least one attacker. False otherwise.
 */
 bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
+    printf("allOutHaveOneInAttacker\n");
     GSList* outLabeled = getAllOutLabeledArgs(labeling);
     
     // iterate through all OUT labeled arguments and 
@@ -148,6 +206,7 @@ bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
  * @return True if labeling is admissible. False otherwise. 
 */
 bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling){
+    printf("isAdmissibleLabeling\n");
     return allInAttackersAreOut(aaf, labeling) && allOutHaveOneInAttacker(aaf, labeling);
 }
 
@@ -160,6 +219,7 @@ bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling){
  * @param argument The argument that will be labeled in
 */
 void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, int argument){
+    printf("labelIn\n");
     //set argument label to IN
     taas__lab_set_label(labeling, argument, LAB_IN);
     //set label of all attackers of argument to OUT
@@ -186,6 +246,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst*
  * @return A pointer to the created Labeling struct.
 */
 struct Labeling* createLabelingForAAF(struct AAF* aaf){
+    printf("createLabelingForAAF\n");
     // initialize labeling
     struct Labeling *labeling;
     labeling = (struct Labeling *)malloc(sizeof(struct Labeling));
@@ -206,6 +267,7 @@ struct Labeling* createLabelingForAAF(struct AAF* aaf){
  * @return A pointer to the created DefendedAgainst struct.
 */
 struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
+    printf("createDefendedForAAF\n");
     struct DefendedAgainst *defended;
     defended = (struct DefendedAgainst *)malloc(sizeof(struct DefendedAgainst));
     adm__defended_init(defended);
@@ -224,11 +286,12 @@ struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
 */
 bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print = true)
 {
+    printf("solve_dcadm\n");
     // Element a
     int a = task->arg;
     
-    //for (int i = 0; i < MAX_IT; i++){  
-    for(;;){ // infinite MAX_IT, needs timeout to stop if not true
+    for (int i = 0; i < MAX_IT; i++){  
+   // for(;;){ // infinite MAX_IT, needs timeout to stop if not true
         // create new labeling 
         struct Labeling* labeling = createLabelingForAAF(aaf);  
         // setup Defended Bitset:

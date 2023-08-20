@@ -20,11 +20,12 @@ Description : Utility functions needed for DC-ADM
  * @return A GSList of all the attackers of the arguments in the given list.
 */
 GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
+    printf("getAllAttackersFromList\n");
     GSList* allAttackers = NULL;
     for(GSList* curr = list; curr != NULL; curr = curr->next){
         int currentI = *((int*)curr->data);
         // copy the attackers list, to not concat the original one
-        GSList* attackers = g_slist_copy(aaf->parents[currentI]);
+        GSList* attackers = g_slist_copy(aaf->parents[currentI]); // --> Leads to long runtime o(n^3)?
         if(allAttackers == NULL){ // this makes sure we don't concatenate a list with NULL
             allAttackers = attackers;
         }else{
@@ -55,6 +56,7 @@ GSList* getAllXLabeledArgs(struct BitSet* inOutBitSet){
  * @return A GSList of the arguments of in(L)
 */
 GSList* getAllInLabeledArgs(struct Labeling* labeling){
+    printf("getAllInLabeledArgs\n");
     return getAllXLabeledArgs(labeling->in);
 }
 
@@ -66,6 +68,7 @@ GSList* getAllInLabeledArgs(struct Labeling* labeling){
  * @return A GSList of the arguments of out(L)
 */
 GSList* getAllOutLabeledArgs(struct Labeling* labeling){
+    printf("getAllOutLabeledArgs\n");
     return getAllXLabeledArgs(labeling->out);
 }
 
@@ -103,10 +106,14 @@ void printGSList(GSList* list){
  * @return A GSList of all attackers of in(L)
 */
 GSList* getAllAttackersOfLIN(struct AAF *aaf, struct Labeling *labeling){ 
+    printf("getAllAttackersOfLIN\n");
     GSList* inL = getAllInLabeledArgs(labeling);
-    GSList* allInAttackers = getAllAttackersFromList(aaf, inL);
+    if(inL != NULL){
+        GSList* allInAttackers = getAllAttackersFromList(aaf, inL);
+        return allInAttackers;
+    }
     g_slist_free_full(inL, deletePtr);
-    return allInAttackers;
+    return NULL;
 }
 
 
@@ -129,12 +136,11 @@ int getRandomIndex(int listLength){
  * @return A random argument of the given list.
 */
 int getRandomArgument(GSList* list){
-    //printf("getRandomArgument!\n");
     if(list != NULL){
         int listLength = g_slist_length(list);
         //printf("List length: %d\n", listLength);
         int randomIndex = getRandomIndex(listLength);
-        printf("randomIndex: %d for list length: %d\n", randomIndex, listLength);
+        //printf("randomIndex: %d for list length: %d\n", randomIndex, listLength);
         int randomArgument = *((int*)g_slist_nth_data(list, randomIndex));
         //printf("randomArgument: %d\n", randomArgument);
         return randomArgument;
