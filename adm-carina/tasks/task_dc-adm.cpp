@@ -57,14 +57,14 @@ int getRandomArgumentVector(const std::vector<int>& v){
     return -1;
 }
 
-int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct InLRelations* inLRel) {
+int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended) {
     GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
     std::vector<int> undefendedAttackers;
     undefendedAttackers.reserve(g_slist_length(allAttackers));
 
     for (GSList *current = allAttackers; current != NULL; current = current->next){
         int currentI = *((int*) current->data);
-        int isCurrentDefended = adm__inLRel_defended_get(inLRel, currentI);
+        int isCurrentDefended = adm__defended_get(defended, currentI);
         if (!isCurrentDefended) {
             undefendedAttackers.push_back(currentI);
         }
@@ -115,7 +115,7 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct InLRelations* 
 //     return -1;
 // }
 int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
-    printf("findCFirst\n");
+    //printf("findCFirst\n");
     if(b != -1){
           GSList* bAttackers = aaf->parents[b];
           if(bAttackers != NULL){
@@ -149,7 +149,7 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b){
  * @return True if all attackers of in(L) are labelled out. False otherwise.
 */
 bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
-    printf("allInAttackersAreOut\n");
+    //printf("allInAttackersAreOut\n");
     GSList* allInAttackers = getAllAttackersOfLIN(aaf, labeling);
     for(GSList* curr = allInAttackers; curr != NULL; curr = curr->next){
         int currentI = *((int*)curr->data);
@@ -173,7 +173,7 @@ bool allInAttackersAreOut(struct AAF *aaf, struct Labeling *labeling){
  * @return True if all out labeled arguments have at least one attacker. False otherwise.
 */
 bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
-    printf("allOutHaveOneInAttacker\n");
+    //printf("allOutHaveOneInAttacker\n");
     GSList* outLabeled = getAllOutLabeledArgs(labeling);
     
     // iterate through all OUT labeled arguments and 
@@ -204,7 +204,7 @@ bool allOutHaveOneInAttacker(struct AAF *aaf, struct Labeling *labeling){
  * @return True if labeling is admissible. False otherwise. 
 */
 bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling){
-    printf("isAdmissibleLabeling\n");
+    //printf("isAdmissibleLabeling\n");
     return allInAttackersAreOut(aaf, labeling) && allOutHaveOneInAttacker(aaf, labeling);
 }
 
@@ -216,8 +216,8 @@ bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling){
  * @param defended The DefendedAgainst struct of the aaf that needs to be updated
  * @param argument The argument that will be labeled in
 */
-void labelIn(struct AAF *aaf, struct Labeling *labeling, struct InLRelations* defended, int argument){
-    printf("labelIn\n");
+void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, int argument){
+    //printf("labelIn\n");
     //set argument label to IN
     taas__lab_set_label(labeling, argument, LAB_IN);
     //set label of all attackers of argument to OUT
@@ -233,7 +233,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct InLRelations* de
     for(GSList* curr = victims; curr != NULL; curr = curr->next){
         int currentI = *((int*)curr->data);
         taas__lab_set_label(labeling, currentI, LAB_OUT);
-        adm__inLRel_defended_set(defended, currentI, YES);
+        adm__defended_set(defended, currentI, YES);
 
     }
 }
@@ -244,7 +244,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct InLRelations* de
  * @return A pointer to the created Labeling struct.
 */
 struct Labeling* createLabelingForAAF(struct AAF* aaf){
-    printf("createLabelingForAAF\n");
+    //printf("createLabelingForAAF\n");
     // initialize labeling
     struct Labeling *labeling;
     labeling = (struct Labeling *)malloc(sizeof(struct Labeling));
@@ -264,17 +264,15 @@ struct Labeling* createLabelingForAAF(struct AAF* aaf){
  * @param aaf The AAF that the DefendedAgainst struct shall be created for
  * @return A pointer to the created DefendedAgainst struct.
 */
-struct InLRelations* createDefendedForAAF(struct AAF* aaf){
-    printf("createDefendedForAAF\n");
-    struct InLRelations *inLRel;
-    inLRel = (struct InLRelations *)malloc(sizeof(struct InLRelations));
-    adm__inLRel_init(inLRel);
-    bitset__init(inLRel->defended, aaf->number_of_arguments);
-    bitset__unsetAll(inLRel->defended);
-    bitset__init(inLRel->attacks, aaf->number_of_arguments);
-    bitset__unsetAll(inLRel->attacks);
+struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
+    //printf("createDefendedForAAF\n");
+    struct DefendedAgainst *defended;
+    defended = (struct DefendedAgainst *)malloc(sizeof(struct DefendedAgainst));
+    adm__defended_init(defended);
+    bitset__init(defended->yes, aaf->number_of_arguments);
+    bitset__unsetAll(defended->yes);
 
-    return inLRel;
+    return defended;
 }
 
 /**
@@ -286,7 +284,7 @@ struct InLRelations* createDefendedForAAF(struct AAF* aaf){
 */
 bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print = true)
 {
-    printf("solve_dcadm\n");
+    //printf("solve_dcadm\n");
     // Element a
     int a = task->arg;
     
@@ -295,7 +293,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         // create new labeling 
         struct Labeling* labeling = createLabelingForAAF(aaf);  
         // setup Defended Bitset:
-        struct InLRelations* defended = createDefendedForAAF(aaf);
+        struct DefendedAgainst* defended = createDefendedForAAF(aaf);
         // L(a) <- in
         labelIn(aaf, labeling, defended, a);
        
@@ -317,18 +315,18 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         {
             printf("YES\n");
             if(do_print){
-             printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
+             //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
             }
             // freeing the allocated memory
             taas__lab_destroy(labeling);
-            adm__inLRel_destroy(defended);
+            adm__defended_destroy(defended);
             // the labeling is admissible, returns true
             
             return true;
         }
         // freeing the allocated memory
         taas__lab_destroy(labeling);
-        adm__inLRel_destroy(defended);
+        adm__defended_destroy(defended);
     }
     // returns false if all tries were taken
      printf("NO\n");
