@@ -20,7 +20,7 @@ Description : Utility functions needed for DC-ADM
  * @return A GSList of all the attackers of the arguments in the given list.
 */
 GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
-    printf("getAllAttackersFromList\n");
+    //printf("getAllAttackersFromList\n");
     GSList* allAttackers = NULL;
     for(GSList* curr = list; curr != NULL; curr = curr->next){
         int currentI = *((int*)curr->data);
@@ -41,7 +41,7 @@ GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
  * @param inOutBitSet Either the in or out BitSet of a labeling.
  * @return A GSList of the arguments of in(L) or out(L)
 */
-GSList* getAllXLabeledArgs(struct BitSet* inOutBitSet){
+GSList* getAllSetArgsFromBitSet(struct BitSet* inOutBitSet){
     GSList* xLabeled = NULL;
     for (int idx = bitset__next_set_bit(inOutBitSet, 0); idx != -1; idx = bitset__next_set_bit(inOutBitSet, idx + 1)) {
         xLabeled = g_slist_prepend(xLabeled, GINT_TO_POINTER(new int(idx)));
@@ -56,8 +56,8 @@ GSList* getAllXLabeledArgs(struct BitSet* inOutBitSet){
  * @return A GSList of the arguments of in(L)
 */
 GSList* getAllInLabeledArgs(struct Labeling* labeling){
-    printf("getAllInLabeledArgs\n");
-    return getAllXLabeledArgs(labeling->in);
+    //printf("getAllInLabeledArgs\n");
+    return getAllSetArgsFromBitSet(labeling->in);
 }
 
 
@@ -68,11 +68,12 @@ GSList* getAllInLabeledArgs(struct Labeling* labeling){
  * @return A GSList of the arguments of out(L)
 */
 GSList* getAllOutLabeledArgs(struct Labeling* labeling){
-    printf("getAllOutLabeledArgs\n");
-    return getAllXLabeledArgs(labeling->out);
+    //printf("getAllOutLabeledArgs\n");
+    return getAllSetArgsFromBitSet(labeling->out);
 }
 
-// 
+
+
 /**
  * @brief Callback function for g_slist_free_full. 
  * This is neccessary if memory was allocated with new during the creation of the list.
@@ -91,10 +92,10 @@ void printGSList(GSList* list){
     if(list != NULL){
         for (GSList *current = list; current != NULL; current = current->next){
             int* currentIndex = (int*)current->data;
-            //printf("%d -> ", *currentIndex);
+            printf("%d -> ", *currentIndex);
         }
     }
-    //printf("\n");
+    printf("\n");
 }
 
 
@@ -105,17 +106,20 @@ void printGSList(GSList* list){
  * @param labeling // i don't think we need this
  * @return A GSList of all attackers of in(L)
 */
-GSList* getAllAttackersOfLIN(struct AAF *aaf, struct Labeling *labeling){ 
-    printf("getAllAttackersOfLIN\n");
-    GSList* inL = getAllInLabeledArgs(labeling);
-    if(inL != NULL){
-        GSList* allInAttackers = getAllAttackersFromList(aaf, inL);
-        return allInAttackers;
-    }
-    g_slist_free_full(inL, deletePtr);
-    return NULL;
-}
+// GSList* getAllAttackersOfLINPrev(struct AAF *aaf, struct Labeling *labeling){ 
+//     //printf("getAllAttackersOfLIN\n");
+//     GSList* inL = getAllInLabeledArgs(labeling);
+//     if(inL != NULL){
+//         GSList* allInAttackers = getAllAttackersFromList(aaf, inL);
+//         return allInAttackers;
+//     }
+//     g_slist_free_full(inL, deletePtr);
+//     return NULL;
+// }
 
+GSList* getAllAttackersOfLIN(struct DefendedAgainst* defended){
+    return getAllSetArgsFromBitSet(defended->attacks);
+}
 
 
 /**
@@ -138,11 +142,11 @@ int getRandomIndex(int listLength){
 int getRandomArgument(GSList* list){
     if(list != NULL){
         int listLength = g_slist_length(list);
-        //printf("List length: %d\n", listLength);
+        ////printf("List length: %d\n", listLength);
         int randomIndex = getRandomIndex(listLength);
-        //printf("randomIndex: %d for list length: %d\n", randomIndex, listLength);
+        ////printf("randomIndex: %d for list length: %d\n", randomIndex, listLength);
         int randomArgument = *((int*)g_slist_nth_data(list, randomIndex));
-        //printf("randomArgument: %d\n", randomArgument);
+        ////printf("randomArgument: %d\n", randomArgument);
         return randomArgument;
     }
     return -1;
