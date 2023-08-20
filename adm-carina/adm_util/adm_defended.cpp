@@ -19,37 +19,65 @@ Description : Utility struct needed for DC-ADM
  * Arguments not mentioned in either in or out
  * are either undecided or not included.
  */
-struct DefendedAgainst{
+struct InLRelations{
   // Arguments that are defended against
-  struct BitSet *yes;
+  struct BitSet *defended;
+  // Arguments that attack in(L)
+  struct BitSet *attacks;
 };
 
 /*
  * Initialises a labeling.
  */
-void adm__defended_init(struct DefendedAgainst* defended){
-  defended->yes = (struct BitSet*) malloc(sizeof(struct BitSet));
+void adm__inLRel_init(struct InLRelations* inLRel){
+  inLRel->defended = (struct BitSet*) malloc(sizeof(struct BitSet));
+  inLRel->attacks = (struct BitSet*) malloc(sizeof(struct BitSet));
 }
 
 /**
  * Returns the label of the given argument.
  */
-int adm__defended_get(struct DefendedAgainst* defended, int arg){
-    if(bitset__get(defended->yes,arg))
+int adm__inLRel_defended_get(struct InLRelations* inLRel, int arg){
+    if(bitset__get(inLRel->defended,arg))
         return YES;
     else return NO;
 }
 
 /**
+ * Returns the label of the given argument.
+ */
+int adm__inLRel_attacks_get(struct InLRelations* inLRel, int arg){
+    if(bitset__get(inLRel->attacks,arg))
+        return YES;
+    else return NO;
+}
+
+
+/**
  * Sets the label of the given argument.
  */
-void adm__defended_set(struct DefendedAgainst* defended, int arg, int label){
+void adm__inLRel_defended_set(struct InLRelations* inLRel, int arg, int label){
   if(label == YES){
-      bitset__set(defended->yes,arg);
+      bitset__set(inLRel->defended,arg);
       return;
   }
   if(label == NO){
-    bitset__unset(defended->yes,arg);
+    bitset__unset(inLRel->defended,arg);
+    return;
+  }
+  return;
+}
+
+/**
+ * Sets the label of the given argument.
+ */
+void adm__inLRel_attacks_set(struct InLRelations* inLRel, int arg, int label){
+  if(label == YES){
+      bitset__set(inLRel->attacks,arg);
+      return;
+  }
+  if(label == NO){
+    bitset__unset(inLRel->attacks,arg);
     return;
   }
   return;
@@ -61,52 +89,53 @@ void adm__defended_set(struct DefendedAgainst* defended, int arg, int label){
  * gives a string representation of the labeling in the form
  * "[a1=l1,...,an=ln]" where a1,...,an are all arguments and li is t
  */
-char* adm__defended_print(struct DefendedAgainst* defended, struct AAF* aaf){
-  int len = 100;
-  char* str = (char*) malloc(len);
-  int sidx = 0;
-  str[sidx++] = '[';
-  int isFirst = 1;
-  for(int idx = 0; idx < aaf->number_of_arguments; idx++){
-    if(sidx + strlen(aaf->ids2arguments[idx]) + 6 > len){
-      len += 100;
-      str = (char*) realloc(str, len);
-    }
-    if(isFirst != 0){
-      strcpy(&str[sidx],aaf->ids2arguments[idx]);
-      sidx += strlen(aaf->ids2arguments[idx]);
-      str[sidx++] = '=';
-      if(adm__defended_get(defended,idx) == YES)
-        str[sidx++] = 'Y';
-      else if(adm__defended_get(defended,idx) == NO)
-        str[sidx++] = 'N';
-      else
-        str[sidx++] = 'X';
-      isFirst = 0;
-    } else{
-      str[sidx++] = ',';
-      strcpy(&str[sidx],aaf->ids2arguments[idx]);
-      sidx += strlen(aaf->ids2arguments[idx]);
-      str[sidx++] = '=';
-      if(adm__defended_get(defended,idx) == YES)
-        str[sidx++] = 'Y';
-      else if(adm__defended_get(defended,idx) == NO)
-        str[sidx++] = 'N';
-      else
-        str[sidx++] = 'X';
-    }
-  }
-  str[sidx++] = ']';
-  str[sidx] = '\0';
-  return str;
-}
+// char* adm__inLRel_print(struct InLRelations* rel, struct AAF* aaf){
+//   int len = 100;
+//   char* str = (char*) malloc(len);
+//   int sidx = 0;
+//   str[sidx++] = '[';
+//   int isFirst = 1;
+//   for(int idx = 0; idx < aaf->number_of_arguments; idx++){
+//     if(sidx + strlen(aaf->ids2arguments[idx]) + 6 > len){
+//       len += 100;
+//       str = (char*) realloc(str, len);
+//     }
+//     if(isFirst != 0){
+//       strcpy(&str[sidx],aaf->ids2arguments[idx]);
+//       sidx += strlen(aaf->ids2arguments[idx]);
+//       str[sidx++] = '=';
+//       if(adm__inLRel_get(rel,idx) == YES)
+//         str[sidx++] = 'Y';
+//       else if(adm__inLRel_get(rel,idx) == NO)
+//         str[sidx++] = 'N';
+//       else
+//         str[sidx++] = 'X';
+//       isFirst = 0;
+//     } else{
+//       str[sidx++] = ',';
+//       strcpy(&str[sidx],aaf->ids2arguments[idx]);
+//       sidx += strlen(aaf->ids2arguments[idx]);
+//       str[sidx++] = '=';
+//       if(adm__inLRel_get(defended,idx) == YES)
+//         str[sidx++] = 'Y';
+//       else if(adm__inLRel_get(defended,idx) == NO)
+//         str[sidx++] = 'N';
+//       else
+//         str[sidx++] = 'X';
+//     }
+//   }
+//   str[sidx++] = ']';
+//   str[sidx] = '\0';
+//   return str;
+// }
 
 /*
  * Destroys a labeling
  */
-void adm__defended_destroy(struct DefendedAgainst* defended){
-  bitset__destroy(defended->yes);
-  free(defended);
+void adm__inLRel_destroy(struct InLRelations* inLRel){
+  bitset__destroy(inLRel->defended);
+  bitset__destroy(inLRel->attacks);
+  free(inLRel);
 }
 
  /* ============================================================================================================== */
