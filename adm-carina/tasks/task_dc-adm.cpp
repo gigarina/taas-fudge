@@ -61,9 +61,6 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
     std::vector<int> undefendedAttackers;
     //undefendedAttackers.reserve(g_slist_length(allAttackers));
     for (int idx = bitset__next_set_bit(defended->attacks, 0); idx != -1; idx = bitset__next_set_bit(defended->attacks, idx + 1)) {
-        if(adm__triedB_get(defended, idx) == YES){
-            printf("Already tried B: %d\n", idx);
-        }
         if(adm__defended_get(defended, idx) == NO && adm__triedB_get(defended, idx) == NO){
             undefendedAttackers.push_back(idx);
         }
@@ -134,6 +131,15 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
 //     }
 //     return -1;
 // }
+
+bool isCSelfAttacking(struct AAF* aaf, struct DefendedAgainst* defended, int c){
+    bool isSelfAttacking = (bool) bitset__get(aaf->loops, c);
+    if(isSelfAttacking){
+        adm__excludeC(defended, c);       
+    }
+    return isSelfAttacking;
+}
+
 int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct DefendedAgainst* defended){
     //printf("findCFirst\n");
     if(b != -1){
@@ -145,11 +151,8 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct Defende
                 int* currentPtr = (int*) current->data;
                 int currentI = *currentPtr;
                 int currentLabel = taas__lab_get_label(labeling, currentI);
-                int selfAttacking = bitset__get(aaf->loops, currentI);
+                int selfAttacking = isCSelfAttacking(aaf, defended, currentI);
                 bool alreadyTried = adm__alreadyTriedC(defended, currentI);
-                if(alreadyTried){
-                    printf("Already tried %d\n", currentI);
-                }
                 if(currentLabel == LAB_UNDEC && !selfAttacking && !alreadyTried){ // if it's not out it is not in conflict with in(L)
                     conflictFreeAttackers.push_back(currentI);
                 }
@@ -253,6 +256,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst*
         int currentI = *((int*)curr->data);
         taas__lab_set_label(labeling, currentI, LAB_OUT);
         adm__attacks_set(defended, currentI, YES);
+        adm__excludeC(defended, currentI);
 
     }
     //set label of all children of argument to OUT and 
@@ -262,6 +266,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst*
         int currentI = *((int*)curr->data);
         taas__lab_set_label(labeling, currentI, LAB_OUT);
         adm__defended_set(defended, currentI, YES);
+        adm__excludeC(defended, currentI);
 
     }
 }
@@ -303,6 +308,8 @@ struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
     bitset__unsetAll(defended->attacks);
     bitset__init(defended->triedBs, aaf->number_of_arguments);
     bitset__unsetAll(defended->triedBs);
+    bitset__init(defended->triedCs, aaf->number_of_arguments);
+    bitset__unsetAll(defended->triedCs);
 
     return defended;
 }
@@ -319,6 +326,14 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
     //printf("solve_dcadm\n");
     // Element a
     int a = task->arg;
+    GSList* aAttackers = aaf->parents[a];
+    for(GSList* currAtt = aAttackers; currAtt != NULL; currAtt = currAtt->next){
+        int i = *((int*)currAtt->data);
+        if(aaf->parents[i] == NULL){
+            printf("NO\n");
+            return false;
+        }
+    }
 
     // check if queried argument is selfAttacking.
     int selfAttacking = bitset__get(aaf->loops, a);
@@ -328,7 +343,6 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
     }
     
     for (int i = 0; i < MAX_IT; i++){  
-   // for(;;){ // infinite MAX_IT, needs timeout to stop if not true
         // create new labeling 
         struct Labeling* labeling = createLabelingForAAF(aaf);  
         // setup Defended Bitset:
@@ -340,16 +354,15 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         {   
             // b is attacker of in(L) that in(L) doesn't attack
             int b = findBFirst(aaf, labeling, defended);
-            printf("B: %d\n", b); 
+            
             // if there is one attacker in(L) can't defend itself against, 
             // argument a can't be credulously accepted
-            if(b == -1  || aaf->parents[b] == NULL){
-                printf("NO\n");
-                return false;
+            if (b ==-1  || aaf->parents[b] == NULL){
+                break;
             }
             // c is attacker of b, c is not in conflict with in(L)
             int c = findCFirst(aaf, labeling, b, defended); 
-            printf("C: %d\n", c); 
+           
 
             if (c == -1){ // no c found
                 break; // start a new try
