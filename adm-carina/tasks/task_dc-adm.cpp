@@ -57,11 +57,11 @@ int getRandomArgumentVector(const std::vector<int>& v){
     return -1;
 }
 
-int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended) {
+int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs) {
     std::vector<int> undefendedAttackers;
     //undefendedAttackers.reserve(g_slist_length(allAttackers));
     for (int idx = bitset__next_set_bit(defended->attacks, 0); idx != -1; idx = bitset__next_set_bit(defended->attacks, idx + 1)) {
-        if(adm__defended_get(defended, idx) == NO && adm__triedB_get(defended, idx) == NO){
+        if(adm__defended_get(defended, idx) == NO && adm__triedB_get(triedArgs, idx) == NO){
             undefendedAttackers.push_back(idx);
         }
     }
@@ -132,7 +132,7 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
 //     return -1;
 // }
 
-bool isCSelfAttacking(struct AAF* aaf, struct DefendedAgainst* defended, int c){
+bool isCSelfAttacking(struct AAF* aaf, struct TriedArguments* defended, int c){
     bool isSelfAttacking = (bool) bitset__get(aaf->loops, c);
     if(isSelfAttacking){
         adm__excludeC(defended, c);       
@@ -140,7 +140,7 @@ bool isCSelfAttacking(struct AAF* aaf, struct DefendedAgainst* defended, int c){
     return isSelfAttacking;
 }
 
-int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct DefendedAgainst* defended){
+int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedArguments* defended){
     //printf("findCFirst\n");
     if(b != -1){
           GSList* bAttackers = aaf->parents[b];
@@ -246,7 +246,7 @@ bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling, struct Def
  * @param defended The DefendedAgainst struct of the aaf that needs to be updated
  * @param argument The argument that will be labeled in
 */
-void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, int argument){
+void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs, int argument){
     //printf("labelIn\n");
     //set argument label to IN
     taas__lab_set_label(labeling, argument, LAB_IN);
@@ -256,7 +256,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst*
         int currentI = *((int*)curr->data);
         taas__lab_set_label(labeling, currentI, LAB_OUT);
         adm__attacks_set(defended, currentI, YES);
-        adm__excludeC(defended, currentI);
+        adm__excludeC(triedArgs, currentI);
 
     }
     //set label of all children of argument to OUT and 
@@ -266,7 +266,7 @@ void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst*
         int currentI = *((int*)curr->data);
         taas__lab_set_label(labeling, currentI, LAB_OUT);
         adm__defended_set(defended, currentI, YES);
-        adm__excludeC(defended, currentI);
+        adm__excludeC(triedArgs, currentI);
 
     }
 }
@@ -306,11 +306,18 @@ struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
     bitset__unsetAll(defended->yes);
     bitset__init(defended->attacks, aaf->number_of_arguments);
     bitset__unsetAll(defended->attacks);
+
+    return defended;
+}
+
+struct TriedArguments* createTriedArguments(struct AAF* aaf){
+    struct TriedArguments* defended;
+     defended = (struct TriedArguments *)malloc(sizeof(struct TriedArguments));
+    adm__tried_init(defended);
     bitset__init(defended->triedBs, aaf->number_of_arguments);
     bitset__unsetAll(defended->triedBs);
     bitset__init(defended->triedCs, aaf->number_of_arguments);
     bitset__unsetAll(defended->triedCs);
-
     return defended;
 }
 
@@ -342,18 +349,20 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         return false;
     }
     
+    struct TriedArguments* triedArgs = createTriedArguments(aaf);
+    
     for (int i = 0; i < MAX_IT; i++){  
         // create new labeling 
         struct Labeling* labeling = createLabelingForAAF(aaf);  
         // setup Defended Bitset:
         struct DefendedAgainst* defended = createDefendedForAAF(aaf);
         // L(a) <- in
-        labelIn(aaf, labeling, defended, a);
+        labelIn(aaf, labeling, defended, triedArgs, a);
        
         while (!adm__isAdmissible(defended, labeling))
         {   
             // b is attacker of in(L) that in(L) doesn't attack
-            int b = findBFirst(aaf, labeling, defended);
+            int b = findBFirst(aaf, labeling, defended, triedArgs);
             
             // if there is one attacker in(L) can't defend itself against, 
             // argument a can't be credulously accepted
@@ -361,14 +370,14 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
                 break;
             }
             // c is attacker of b, c is not in conflict with in(L)
-            int c = findCFirst(aaf, labeling, b, defended); 
+            int c = findCFirst(aaf, labeling, b, triedArgs); 
            
 
             if (c == -1){ // no c found
                 break; // start a new try
             }else{
                 // add c to in(L)
-                labelIn(aaf, labeling, defended, c);
+                labelIn(aaf, labeling, defended, triedArgs, c);
             }  
         }
 
@@ -389,6 +398,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         taas__lab_destroy(labeling);
         adm__defended_destroy(defended);
     }
+    adm__tried_destroy(triedArgs);
     // returns false if all tries were taken
      printf("NO\n");
     return false;
