@@ -129,12 +129,12 @@ char* adm__defended_print(struct DefendedAgainst* defended, struct AAF* aaf){
 
 bool adm__isAdmissible(struct DefendedAgainst* defended, struct Labeling* lab){
 
-   for (int idx = bitset__next_set_bit(lab->out, 0); idx != -1; idx = bitset__next_set_bit(lab->out, idx + 1)) {
+  for (int idx = bitset__next_set_bit(lab->out, 0); idx != -1; idx = bitset__next_set_bit(lab->out, idx + 1)) {
     if(adm__defended_get(defended, idx) != 1){
       return false;
     }
-   }
-   return true;
+  }
+  return true;
 
 }
 

@@ -58,19 +58,13 @@ int getRandomArgumentVector(const std::vector<int>& v){
 }
 
 int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended) {
-    // GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
-    GSList* allAttackers = getAllAttackersOfLIN(defended);
     std::vector<int> undefendedAttackers;
-    undefendedAttackers.reserve(g_slist_length(allAttackers));
-
-    for (GSList *current = allAttackers; current != NULL; current = current->next){
-        int currentI = *((int*) current->data);
-        int isCurrentDefended = adm__defended_get(defended, currentI);
-        if (!isCurrentDefended) {
-            undefendedAttackers.push_back(currentI);
+    //undefendedAttackers.reserve(g_slist_length(allAttackers));
+    for (int idx = bitset__next_set_bit(defended->attacks, 0); idx != -1; idx = bitset__next_set_bit(defended->attacks, idx + 1)) {
+        if(adm__defended_get(defended, idx) == NO){
+            undefendedAttackers.push_back(idx);
         }
     }
-    g_slist_free_full(allAttackers, deletePtr);
     if (!undefendedAttackers.empty()) {
         int b = getRandomArgumentVector(undefendedAttackers);
         return b;
@@ -78,6 +72,28 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
 
     return -1;
 }
+
+// int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended) {
+//     // GSList* allAttackers = getAllAttackersOfLIN(aaf, labeling);
+//     GSList* allAttackers = getAllAttackersOfLIN(defended);
+//     std::vector<int> undefendedAttackers;
+//     undefendedAttackers.reserve(g_slist_length(allAttackers));
+
+//     for (GSList *current = allAttackers; current != NULL; current = current->next){
+//         int currentI = *((int*) current->data);
+//         int isCurrentDefended = adm__defended_get(defended, currentI);
+//         if (!isCurrentDefended) {
+//             undefendedAttackers.push_back(currentI);
+//         }
+//     }
+//     g_slist_free_full(allAttackers, deletePtr);
+//     if (!undefendedAttackers.empty()) {
+//         int b = getRandomArgumentVector(undefendedAttackers);
+//         return b;
+//     }
+
+//     return -1;
+// }
 
 
 
