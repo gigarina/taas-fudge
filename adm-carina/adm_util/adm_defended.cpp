@@ -10,7 +10,7 @@ Copyright : GPL3
 Description : Utility struct needed for DC-ADM
 ============================================================================
 */
-
+#include <unordered_set>
 
 #define NO 0
 #define YES 1
@@ -24,6 +24,8 @@ struct DefendedAgainst{
   // Arguments that are defended against
   struct BitSet *yes;
   struct BitSet *attacks;
+  struct BitSet *triedBs;
+  std::unordered_set<int> triedCs;
 };
 
 /*
@@ -32,6 +34,7 @@ struct DefendedAgainst{
 void adm__defended_init(struct DefendedAgainst* defended){
   defended->yes = (struct BitSet*) malloc(sizeof(struct BitSet));
   defended->attacks = (struct BitSet*) malloc(sizeof(struct BitSet));
+  defended->triedBs = (struct BitSet*) malloc(sizeof(struct BitSet));
 }
 
 /**
@@ -48,6 +51,15 @@ int adm__defended_get(struct DefendedAgainst* defended, int arg){
  */
 int adm__attacks_get(struct DefendedAgainst* defended, int arg){
     if(bitset__get(defended->attacks,arg))
+        return YES;
+    else return NO;
+}
+
+/**
+ * Returns the label of the given argument.
+ */
+int adm__triedB_get(struct DefendedAgainst* defended, int arg){
+    if(bitset__get(defended->triedBs,arg))
         return YES;
     else return NO;
 }
@@ -78,6 +90,32 @@ void adm__attacks_set(struct DefendedAgainst* defended, int arg, int label){
   if(label == NO){
     bitset__unset(defended->attacks,arg);
     return;
+  }
+  return;
+}
+
+void adm__triedB_set(struct DefendedAgainst* defended, int b){
+  bitset__set(defended->triedBs,b);
+  return;
+}
+
+bool adm__alreadyTriedC(struct DefendedAgainst* defended, int c){
+  return (defended->triedCs).find(c) != (defended->triedCs).end();
+}
+
+void adm__triedC_set(struct DefendedAgainst* defended, struct AAF* aaf, int b, int c){
+  (defended->triedCs).insert(c);
+  GSList* bAttackers = aaf->parents[b];
+  bool allCsTriedForB = true;
+  for (GSList *current = bAttackers; current != NULL; current = current->next){
+    int currentI = *((int*) current->data);
+    if(!adm__alreadyTriedC(defended, currentI)){
+      allCsTriedForB = false;
+      break;
+    }
+  }
+  if(allCsTriedForB){
+    adm__triedB_set(defended, b);
   }
   return;
 }
@@ -138,12 +176,14 @@ bool adm__isAdmissible(struct DefendedAgainst* defended, struct Labeling* lab){
 
 }
 
+
 /*
  * Destroys a labeling
  */
 void adm__defended_destroy(struct DefendedAgainst* defended){
   bitset__destroy(defended->yes);
   bitset__destroy(defended->attacks);
+  bitset__destroy(defended->triedBs);
   free(defended);
 }
 
