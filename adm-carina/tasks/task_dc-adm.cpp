@@ -209,6 +209,7 @@ bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling, struct Def
     return allInAttackersAreOut(aaf, labeling, defended) && allOutHaveOneInAttacker(aaf, labeling);
 }
 
+
 /**
  * @brief Labels the given argument in and all the arguments it is in conflict with as out.
  * Saves the arguments in(L) defends itself against.
@@ -301,8 +302,9 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         // L(a) <- in
         labelIn(aaf, labeling, defended, a);
        
-        while (!isAdmissibleLabeling(aaf, labeling, defended))
+        while (!adm__isAdmissible(defended, labeling))
         {   
+            
             // b is attacker of in(L) that in(L) doesn't attack
             int b = findBFirst(aaf, labeling, defended);
             // c is attacker of b, c is not in conflict with in(L)
@@ -315,11 +317,12 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
                 labelIn(aaf, labeling, defended, c);
             }  
         }
-        if (isAdmissibleLabeling(aaf, labeling, defended))
+
+        if (adm__isAdmissible(defended, labeling))
         {
             printf("YES\n");
             if(do_print){
-             //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
+             printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
             }
             // freeing the allocated memory
             taas__lab_destroy(labeling);
