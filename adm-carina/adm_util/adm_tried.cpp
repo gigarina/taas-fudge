@@ -1,3 +1,5 @@
+
+
 #define NO 0
 #define YES 1
 
@@ -44,21 +46,29 @@ void adm__excludeC(struct TriedArguments* defended, int c){
   return;
 }
 
-void adm__set_triedB_if_necessary(struct TriedArguments* tried, struct AAF* aaf, int b){
-  GSList* bAttackers = aaf->children[b];
+void adm__set_triedB_if_necessary(struct TriedArguments* tried, struct TempExclude* tempExcl, struct AAF* aaf, int b){
+  GSList* bAttackers = aaf->parents[b];
   bool allCsTriedForB = true;
+  bool allTempCsExcludedForTempB = true;
   for (GSList *current = bAttackers; current != NULL; current = current->next){
     int currentI = *((int*) current->data);
     if(!adm__alreadyTriedC(tried, currentI)){
       allCsTriedForB = false;
-      printf("we have not yet tried C: %d\n", currentI);
-      break;
+      //printf("we have not yet tried C: %d\n", currentI);
+      //break;
+    }
+    if(!adm__tempExcludeC_get(tempExcl, currentI)){
+      allTempCsExcludedForTempB = false;
     }
   }
   if(allCsTriedForB){
     adm__triedB_set(tried, b);
     // all tried Bs 
     adm__excludeC(tried, b);
+  }
+  if(allTempCsExcludedForTempB){
+    adm__tempExcludeB_set(tempExcl, b);
+    adm__tempExcludeC_set(tempExcl, b);
   }
   return;
 }

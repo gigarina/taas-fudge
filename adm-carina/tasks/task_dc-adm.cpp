@@ -16,9 +16,9 @@ Description : solve function for DC-ADM
 
 #include "../adm_util/adm_basic_util.cpp"
 
-const int MAX_IT = 15000000;
+const int MAX_IT = 5;//15000000;
 
- 
+ int counter = 0;
 /**
  * @brief Randomly selects an attacker of in(L) that in(L) doesn't defend itself against.
  * @param aaf
@@ -49,6 +49,13 @@ int findBFirst(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgains
 }*/
 
 int getRandomArgumentVector(const std::vector<int>& v){
+    ++counter;
+    if(counter == 1){
+        return 3; 
+    }
+    if (counter == 2){
+        return 2;
+    }
     if(!v.empty()){
         int listLength = v.size();
         int randomIndex = getRandomIndex(listLength);
@@ -57,17 +64,17 @@ int getRandomArgumentVector(const std::vector<int>& v){
     return -1;
 }
 
-int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs) {
+int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs, struct TempExclude* tempExcl) {
     std::vector<int> undefendedAttackers;
     //undefendedAttackers.reserve(g_slist_length(allAttackers));
     for (int idx = bitset__next_set_bit(defended->attacks, 0); idx != -1; idx = bitset__next_set_bit(defended->attacks, idx + 1)) {
-        if(adm__defended_get(defended, idx) == NO && adm__triedB_get(triedArgs, idx) == NO){
+        if(adm__defended_get(defended, idx) == NO && adm__triedB_get(triedArgs, idx) == NO && adm__tempExcludeB_get(tempExcl, idx) == NO){
             undefendedAttackers.push_back(idx);
         }
     }
     if (!undefendedAttackers.empty()) {
         int b = getRandomArgumentVector(undefendedAttackers);
-        adm__set_triedB_if_necessary(triedArgs, aaf, b);
+        adm__set_triedB_if_necessary(triedArgs, tempExcl, aaf, b);
         return b;
     }
 
@@ -148,6 +155,7 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedAr
           if(bAttackers != NULL){
             std::vector<int> conflictFreeAttackers;
             conflictFreeAttackers.reserve(g_slist_length(bAttackers));
+             printf("C Candidates: ");
             for (GSList *current = bAttackers; current != NULL; current = current->next){
                 int* currentPtr = (int*) current->data;
                 int currentI = *currentPtr;
@@ -155,9 +163,11 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedAr
                 int selfAttacking = isCSelfAttacking(aaf, tried, currentI);
                 bool alreadyTried = adm__alreadyTriedC(tried, currentI);
                 if(currentLabel == LAB_UNDEC && !selfAttacking && !alreadyTried && adm__tempExcludeC_get(tempExcl, currentI)== NO){ // if it's not out it is not in conflict with in(L)
+                    printf("%d, ", currentI);
                     conflictFreeAttackers.push_back(currentI);
                 }
             }
+             printf("\n ");
             if(!conflictFreeAttackers.empty()){
                 int c = getRandomArgumentVector(conflictFreeAttackers);
                 return c;
@@ -323,15 +333,13 @@ struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
  * @param aaf The AAF that the DefendedAgainst struct shall be created for
  * @return A pointer to the created DefendedAgainst struct.
 */
-struct TempExclude* createTempExcludeForAAF(struct AAF* aaf){
+struct TempExclude* createTempExcludeForAAF(struct AAF* aaf, struct TriedArguments* tried){
     //printf("createDefendedForAAF\n");
     struct TempExclude *tempExcl;
     tempExcl = (struct TempExclude *)malloc(sizeof(struct TempExclude));
     adm__tempExcl_init(tempExcl);
-    bitset__init(tempExcl->tempExcludeC, aaf->number_of_arguments);
-    bitset__unsetAll(tempExcl->tempExcludeC);
-    bitset__init(tempExcl->tempExcludeB, aaf->number_of_arguments);
-    bitset__unsetAll(tempExcl->tempExcludeB);
+    bitset__clone(tried->triedCs, tempExcl->tempExcludeC);
+    bitset__clone(tried->triedBs, tempExcl->tempExcludeB);
 
     return tempExcl;
 }
@@ -347,6 +355,19 @@ struct TriedArguments* createTriedArguments(struct AAF* aaf){
     return defended;
 }
 
+// bool allInLAttackersTested(struct AAF* aaf, struct TriedArguments* triedArgs, struct DefendedAgainst* defended, struct TempExclude* tempExcl){
+//     printf("are all in(L) attackers tested?\n");
+//     for (int idx = bitset__next_set_bit(defended->attacks, 0); idx != -1; idx = bitset__next_set_bit(defended->attacks, idx + 1)) {
+//         if (!adm__tempExcludeC_get(triedArgs, idx)){
+//             printf("NO, %d not yet tested\n", idx);
+//             return false;
+//         }
+        
+//     }
+//     printf("all in(L) Attackers tested\n");
+//     return true;
+// }
+
 bool allaAttackersTested(struct AAF* aaf, struct TriedArguments* triedArgs, int a){
     printf("are all a attackers tested?\n");
     GSList* aAttackers = aaf->parents[a];
@@ -354,7 +375,7 @@ bool allaAttackersTested(struct AAF* aaf, struct TriedArguments* triedArgs, int 
     for (GSList *current = aAttackers; current != NULL; current = current->next){
         int currentI = *((int*) current->data);
        // printf("%d: tried? %d, ", currentI, (adm__alreadyTriedC(triedArgs, a)== NO));
-        if (!adm__alreadyTriedC(triedArgs, currentI)){
+        if (!adm__alreadyTriedC(triedArgs, currentI) && !adm__triedB_get(triedArgs, currentI)){
             printf("NO, %d not yet tested\n", currentI);
             return false;
         }
@@ -406,7 +427,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         // setup Defended Bitset:
         struct DefendedAgainst* defended = createDefendedForAAF(aaf);
 
-        struct TempExclude* tempExcl = createTempExcludeForAAF(aaf);
+        struct TempExclude* tempExcl = createTempExcludeForAAF(aaf, triedArgs);
         // L(a) <- in
         labelIn(aaf, labeling, defended, triedArgs, tempExcl, a);
 
@@ -418,7 +439,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         while (!adm__isAdmissible(defended, labeling))
         {   
             // b is attacker of in(L) that in(L) doesn't attack
-            int b = findBFirst(aaf, labeling, defended, triedArgs);
+            int b = findBFirst(aaf, labeling, defended, triedArgs, tempExcl);
             printf("B: %d\n", b);
             // if there is one attacker in(L) can't defend itself against, 
             // argument a can't be credulously accepted
@@ -434,6 +455,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
            printf("C: %d\n", c);
             if (c == -1){ // no c found
                 printf("No c found\n");
+                adm__tempExcludeB_set(tempExcl, b);
                 break; // start a new try
             }else{
                 // add c to in(L)
@@ -459,6 +481,7 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         // freeing the allocated memory
         taas__lab_destroy(labeling);
         adm__defended_destroy(defended);
+        adm__tempExcl_destroy(tempExcl);
        
     }
     adm__tried_destroy(triedArgs);
