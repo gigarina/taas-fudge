@@ -67,6 +67,7 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct DefendedAgains
     }
     if (!undefendedAttackers.empty()) {
         int b = getRandomArgumentVector(undefendedAttackers);
+        adm__set_triedB_if_necessary(triedArgs, aaf, b);
         return b;
     }
 
@@ -140,7 +141,7 @@ bool isCSelfAttacking(struct AAF* aaf, struct TriedArguments* defended, int c){
     return isSelfAttacking;
 }
 
-int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedArguments* defended){
+int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedArguments* tried, struct TempExclude* tempExcl){
     //printf("findCFirst\n");
     if(b != -1){
           GSList* bAttackers = aaf->parents[b];
@@ -151,15 +152,14 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TriedAr
                 int* currentPtr = (int*) current->data;
                 int currentI = *currentPtr;
                 int currentLabel = taas__lab_get_label(labeling, currentI);
-                int selfAttacking = isCSelfAttacking(aaf, defended, currentI);
-                bool alreadyTried = adm__alreadyTriedC(defended, currentI);
-                if(currentLabel == LAB_UNDEC && !selfAttacking && !alreadyTried){ // if it's not out it is not in conflict with in(L)
+                int selfAttacking = isCSelfAttacking(aaf, tried, currentI);
+                bool alreadyTried = adm__alreadyTriedC(tried, currentI);
+                if(currentLabel == LAB_UNDEC && !selfAttacking && !alreadyTried && adm__tempExcludeC_get(tempExcl, currentI)== NO){ // if it's not out it is not in conflict with in(L)
                     conflictFreeAttackers.push_back(currentI);
                 }
             }
             if(!conflictFreeAttackers.empty()){
                 int c = getRandomArgumentVector(conflictFreeAttackers);
-                adm__triedC_set(defended, aaf, b, c);
                 return c;
             }
           }
@@ -246,29 +246,38 @@ bool isAdmissibleLabeling(struct AAF *aaf, struct Labeling *labeling, struct Def
  * @param defended The DefendedAgainst struct of the aaf that needs to be updated
  * @param argument The argument that will be labeled in
 */
-void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs, int argument){
-    //printf("labelIn\n");
-    //set argument label to IN
-    taas__lab_set_label(labeling, argument, LAB_IN);
-    //set label of all attackers of argument to OUT
-    GSList* attackers = aaf->parents[argument];
-    for(GSList* curr = attackers; curr != NULL; curr = curr->next){
-        int currentI = *((int*)curr->data);
-        taas__lab_set_label(labeling, currentI, LAB_OUT);
-        adm__attacks_set(defended, currentI, YES);
-        adm__excludeC(triedArgs, currentI);
+void labelIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs, struct TempExclude* tempExcl, int argument){
+    // If self attacking argument shall be labeled in -> do nothing
+    if(!isCSelfAttacking(aaf, triedArgs, argument)){ 
+        //set argument label to IN
+        taas__lab_set_label(labeling, argument, LAB_IN);
+        // if it is labeled in, we tried it
+        adm__excludeC(triedArgs, argument);
+        //set label of all attackers of argument to OUT
+        GSList* attackers = aaf->parents[argument];
+        for(GSList* curr = attackers; curr != NULL; curr = curr->next){
+            int currentI = *((int*)curr->data);
+            taas__lab_set_label(labeling, currentI, LAB_OUT);
+            adm__attacks_set(defended, currentI, YES);
+            adm__tempExcludeC_set(tempExcl, currentI);
 
-    }
-    //set label of all children of argument to OUT and 
-    // save the children as defended against by in(L)
-    GSList* victims = aaf->children[argument];
-    for(GSList* curr = victims; curr != NULL; curr = curr->next){
-        int currentI = *((int*)curr->data);
-        taas__lab_set_label(labeling, currentI, LAB_OUT);
-        adm__defended_set(defended, currentI, YES);
-        adm__excludeC(triedArgs, currentI);
+        }
+        //set label of all children of argument to OUT and 
+        // save the children as defended against by in(L)
+        GSList* victims = aaf->children[argument];
+        for(GSList* curr = victims; curr != NULL; curr = curr->next){
+            int currentI = *((int*)curr->data);
+            taas__lab_set_label(labeling, currentI, LAB_OUT);
+            adm__defended_set(defended, currentI, YES);
+            adm__tempExcludeC_set(tempExcl, currentI);
 
+        }
     }
+}
+
+void labelCIn(struct AAF *aaf, struct Labeling *labeling, struct DefendedAgainst* defended, struct TriedArguments* triedArgs, struct TempExclude* tempExcl, int b, int c){
+    labelIn(aaf, labeling, defended, triedArgs, tempExcl, c);
+    adm__triedC_set(triedArgs, aaf, b, c);
 }
 
 /**
@@ -309,6 +318,23 @@ struct DefendedAgainst* createDefendedForAAF(struct AAF* aaf){
 
     return defended;
 }
+/**
+ * @brief Creates and initializes a DefendedAgainst struct for the given aaf
+ * @param aaf The AAF that the DefendedAgainst struct shall be created for
+ * @return A pointer to the created DefendedAgainst struct.
+*/
+struct TempExclude* createTempExcludeForAAF(struct AAF* aaf){
+    //printf("createDefendedForAAF\n");
+    struct TempExclude *tempExcl;
+    tempExcl = (struct TempExclude *)malloc(sizeof(struct TempExclude));
+    adm__tempExcl_init(tempExcl);
+    bitset__init(tempExcl->tempExcludeC, aaf->number_of_arguments);
+    bitset__unsetAll(tempExcl->tempExcludeC);
+    bitset__init(tempExcl->tempExcludeB, aaf->number_of_arguments);
+    bitset__unsetAll(tempExcl->tempExcludeB);
+
+    return tempExcl;
+}
 
 struct TriedArguments* createTriedArguments(struct AAF* aaf){
     struct TriedArguments* defended;
@@ -319,6 +345,23 @@ struct TriedArguments* createTriedArguments(struct AAF* aaf){
     bitset__init(defended->triedCs, aaf->number_of_arguments);
     bitset__unsetAll(defended->triedCs);
     return defended;
+}
+
+bool allaAttackersTested(struct AAF* aaf, struct TriedArguments* triedArgs, int a){
+    printf("are all a attackers tested?\n");
+    GSList* aAttackers = aaf->parents[a];
+    printf("a Attackers: ");
+    for (GSList *current = aAttackers; current != NULL; current = current->next){
+        int currentI = *((int*) current->data);
+       // printf("%d: tried? %d, ", currentI, (adm__alreadyTriedC(triedArgs, a)== NO));
+        if (!adm__alreadyTriedC(triedArgs, currentI)){
+            printf("NO, %d not yet tested\n", currentI);
+            return false;
+        }
+        
+    }
+    printf("all a tested\n");
+    return true;
 }
 
 /**
@@ -333,11 +376,14 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
     //printf("solve_dcadm\n");
     // Element a
     int a = task->arg;
+
+    // if one attacker of a has no attackers, a can't be credulously accepted. 
     GSList* aAttackers = aaf->parents[a];
     for(GSList* currAtt = aAttackers; currAtt != NULL; currAtt = currAtt->next){
         int i = *((int*)currAtt->data);
         if(aaf->parents[i] == NULL){
             printf("NO\n");
+            printf("Attacker %d of %d has no Attackers\n", i, a);
             return false;
         }
     }
@@ -346,39 +392,54 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
     int selfAttacking = bitset__get(aaf->loops, a);
     if(selfAttacking){
          printf("NO\n");
+         printf("queried Argument is self Attacking\n");
         return false;
     }
     
     struct TriedArguments* triedArgs = createTriedArguments(aaf);
     
     for (int i = 0; i < MAX_IT; i++){  
+        printf("=======================ROUND %d============================\n", i);
+
         // create new labeling 
         struct Labeling* labeling = createLabelingForAAF(aaf);  
         // setup Defended Bitset:
         struct DefendedAgainst* defended = createDefendedForAAF(aaf);
+
+        struct TempExclude* tempExcl = createTempExcludeForAAF(aaf);
         // L(a) <- in
-        labelIn(aaf, labeling, defended, triedArgs, a);
-       
+        labelIn(aaf, labeling, defended, triedArgs, tempExcl, a);
+
+        if(allaAttackersTested(aaf, triedArgs, a)){
+            printf("NO\n");
+            printf("All a Attackers tested\n");
+            return false;
+        }
         while (!adm__isAdmissible(defended, labeling))
         {   
             // b is attacker of in(L) that in(L) doesn't attack
             int b = findBFirst(aaf, labeling, defended, triedArgs);
-            
+            printf("B: %d\n", b);
             // if there is one attacker in(L) can't defend itself against, 
             // argument a can't be credulously accepted
+             printf("tried Cs: %s\n", adm__triedC_print(triedArgs, aaf));
+            printf("tried Bs: %s\n", adm__triedB_print(triedArgs, aaf));
             if (b ==-1  || aaf->parents[b] == NULL){
+                printf("No B found or b has no attackers\n");
                 break;
             }
             // c is attacker of b, c is not in conflict with in(L)
-            int c = findCFirst(aaf, labeling, b, triedArgs); 
-           
-
+            int c = findCFirst(aaf, labeling, b, triedArgs, tempExcl); 
+            
+           printf("C: %d\n", c);
             if (c == -1){ // no c found
+                printf("No c found\n");
                 break; // start a new try
             }else{
                 // add c to in(L)
-                labelIn(aaf, labeling, defended, triedArgs, c);
+                labelCIn(aaf, labeling, defended, triedArgs, tempExcl, b, c);
             }  
+           
         }
 
         if (adm__isAdmissible(defended, labeling))
@@ -394,13 +455,16 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
             
             return true;
         }
+         printf("Labeling:  %s\n", taas__lab_print_as_labeling(labeling, aaf));
         // freeing the allocated memory
         taas__lab_destroy(labeling);
         adm__defended_destroy(defended);
+       
     }
     adm__tried_destroy(triedArgs);
     // returns false if all tries were taken
      printf("NO\n");
+     printf("All tries used up\n");
     return false;
 }
 
