@@ -43,7 +43,7 @@
 //     int queriedArg;
 //     struct AAF *aaf;
 //     struct Labeling* lab;
-//     struct DefendedAgainst* defended;
+//     struct InLRelation* defended;
 //     struct TriedArguments* tried;
 //     struct TempExclude* tempExcl;
 // };
@@ -51,14 +51,14 @@
 // void init_testCaseInfo(struct TestCaseInfo* tInfo){
 //     tInfo->aaf = (struct AAF*) malloc(sizeof(struct AAF));
 //     tInfo->lab = createLabelingForAAF(tInfo->aaf);
-//     tInfo->defended = createDefendedForAAF(tInfo->aaf);
+//     tInfo->defended = createInLRelForAAF(tInfo->aaf);
 //     tInfo->tried = createTriedArguments(tInfo->aaf);
 //     tInfo->tempExcl = createTempExcludeForAAF(tInfo->aaf);
 // }
 
 // void destroy_testCaseInfo(struct TestCaseInfo* tInfo){
 //     taas__aaf_destroy(tInfo->aaf);
-//     adm__defended_destroy(tInfo->defended);
+//     adm__inLRel_destroy(tInfo->defended);
 //     adm__tried_destroy(tInfo->tried);
 
 //     //free(tInfo);
@@ -97,7 +97,7 @@
 //     int queriedArg;
 //     struct AAF *aaf;
 //     struct Labeling* lab;
-//     struct DefendedAgainst* defended;
+//     struct InLRelation* defended;
 //     struct TriedArguments* tried;
 //     struct TempExclude* tempExcl;
 
@@ -127,14 +127,14 @@
 //         aaf = (struct AAF*) malloc(sizeof(struct AAF));
 //         prepareSetUp();
 //         lab = createLabelingForAAF(aaf);
-//         defended = createDefendedForAAF(aaf);
+//         defended = createInLRelForAAF(aaf);
 //         tried = createTriedArguments(aaf);
 //         tempExcl = createTempExcludeForAAF(aaf);
 //     }
 
 //     virtual ~TestSetupSolveDCADM(){
 //         taas__aaf_destroy(aaf);
-//         adm__defended_destroy(defended);
+//         adm__inLRel_destroy(defended);
 //         adm__tried_destroy(tried);
 //         adm__tempExcl_destroy(tempExcl);
 //     }
@@ -150,7 +150,7 @@
     int queriedArg;
     struct AAF *aaf;
     struct Labeling* lab;
-    struct DefendedAgainst* defended;
+    struct InLRelation* defended;
     struct TriedArguments* tried;
     struct TempExclude* tempExcl;
 
@@ -180,7 +180,7 @@
         aaf = (struct AAF*) malloc(sizeof(struct AAF));
         prepareSetUp();
         lab = createLabelingForAAF(aaf);
-        defended = createDefendedForAAF(aaf);
+        defended = createInLRelForAAF(aaf);
         tried = createTriedArguments(aaf);
         tempExcl = createTempExcludeForAAF(aaf);
     }
@@ -188,7 +188,7 @@
     void tearDown(){
         taas__aaf_destroy(aaf);
         taas__lab_destroy(lab);
-        adm__defended_destroy(defended);
+        adm__inLRel_destroy(defended);
         adm__tried_destroy(tried);
         adm__tempExcl_destroy(tempExcl);
     }
@@ -231,7 +231,7 @@ TEST(TestSetup, noneDefended) {
    int arg = 2;
     int numArgs = (aaf)->number_of_arguments;
     for(int i=0; i< numArgs; i++){
-        EXPECT_FALSE(adm__defended_get(defended, i));
+        EXPECT_FALSE(adm__inLRel_defended_get(defended, i));
     }
     tearDown();
 }
@@ -263,7 +263,7 @@ TEST(labelIn, detachedArg) {
             EXPECT_EQ(LAB_UNDEC, label);
             EXPECT_FALSE(adm__triedC_get(tried, i));
         }
-        EXPECT_FALSE(adm__defended_get(defended, i));
+        EXPECT_FALSE(adm__inLRel_defended_get(defended, i));
     }
     tearDown();
 }
@@ -279,13 +279,13 @@ TEST(labelIn, leafAttacking) {
         if(i == arg){
             EXPECT_EQ(LAB_IN, label);
             EXPECT_TRUE(adm__triedC_get(tried, i));
-            EXPECT_FALSE(adm__defended_get(defended, i));
+            EXPECT_FALSE(adm__inLRel_defended_get(defended, i));
         }else if(i == 3){
             EXPECT_EQ(LAB_OUT, label);
-            EXPECT_TRUE(adm__defended_get(defended, i));
+            EXPECT_TRUE(adm__inLRel_defended_get(defended, i));
         }else{
             EXPECT_EQ(LAB_UNDEC, label);
-            EXPECT_FALSE(adm__defended_get(defended, i));
+            EXPECT_FALSE(adm__inLRel_defended_get(defended, i));
         }
         
     }
@@ -310,7 +310,7 @@ TEST(labelIn, attackedLeaf) {
             EXPECT_EQ(LAB_UNDEC, label);
             EXPECT_FALSE(adm__triedC_get(tried, i));
         }
-        EXPECT_FALSE(adm__defended_get(defended, i));
+        EXPECT_FALSE(adm__inLRel_defended_get(defended, i));
     }
     tearDown();
 }

@@ -13,143 +13,90 @@ Description : Utility functions needed for DC-ADM
 */
 
 /**
- * @brief Iterates through a GSList, saves all attackers of the 
- * arguments in the list into a new GSList and returns it.
+ * @brief decides wether the given Labeling is admissible or not.
+ * For a labeling to be admissible, all in(L) attackers must be out and
+ * all arguments in out(L) have at least one attacker in in(L).
+ * The first condition is implicitly fulfilled by our labelIn function and 
+ * the fact that we only label in Elements that are conflict free with the current in(L). 
+ * The labelIn function labels all elements that are in conflict with the new Element in in(L) as out.
+ * The second condition is tested in this function.
+ * @param defended
+ * @param lab
+ * @return true if labeling is admissible, false otherwise.
+*/
+
+bool adm__isAdmissible(struct InLRelation* inLRel, struct Labeling* lab){
+
+  for (int idx = bitset__next_set_bit(lab->out, 0); idx != -1; idx = bitset__next_set_bit(lab->out, idx + 1)) {
+    if(adm__inLRel_defended_get(inLRel, idx) != 1){
+      return false;
+    }
+  }
+  return true;
+
+}
+
+
+
+void adm__set_triedB_if_necessary(struct AAF* aaf, struct TempExclude* tempExcl, int b){
+  GSList* bAttackers = aaf->parents[b];
+  bool allTempCsExcludedForTempB = true;
+  for (GSList *current = bAttackers; current != NULL; current = current->next){
+    int currentI = *((int*) current->data);
+    if(!adm__tempExcludeC_get(tempExcl, currentI)){
+      allTempCsExcludedForTempB = false;
+      break;
+    }
+  }
+  if(allTempCsExcludedForTempB){
+    adm__tempExcludeB_set(tempExcl, b);
+    adm__tempExcludeC_set(tempExcl, b);
+  }
+  return;
+}
+
+
+/**
+ * @brief Returns if the given C is self-attacking and 
+ * sets triedArguments and TempExclude accordingly.
  * @param aaf
- * @param list The GSList the attacker list shall be created for.
- * @return A GSList of all the attackers of the arguments in the given list.
+ * @param tried
+ * @param c
+ * @return True if c is self attacking, false otherwise.
 */
-GSList* getAllAttackersFromList(struct AAF *aaf, GSList* list){
-    //printf("getAllAttackersFromList\n");
-    GSList* allAttackers = NULL;
-    for(GSList* curr = list; curr != NULL; curr = curr->next){
-        int currentI = *((int*)curr->data);
-        // copy the attackers list, to not concat the original one
-        GSList* attackers = g_slist_copy(aaf->parents[currentI]); // --> Leads to long runtime o(n^3)?
-        if(allAttackers == NULL){ // this makes sure we don't concatenate a list with NULL
-            allAttackers = attackers;
-        }else{
-            allAttackers = g_slist_concat(allAttackers, attackers);
-        }
+bool isCSelfAttacking(struct AAF* aaf, struct TempExclude* tempExcl, int c){
+    bool isSelfAttacking = (bool) bitset__get(aaf->loops, c);
+    if(isSelfAttacking){
+        adm__tempExcludeC_set(tempExcl, c);   
     }
-    return allAttackers;
-}
-
-/**
- * @brief Returns a GSList of all arguments that are labeled in or out in the given bitset.
- * Lists created by this function must be freed with g_slist_free_full.
- * @param inOutBitSet Either the in or out BitSet of a labeling.
- * @return A GSList of the arguments of in(L) or out(L)
-*/
-GSList* getAllSetArgsFromBitSet(struct BitSet* inOutBitSet){
-    GSList* xLabeled = NULL;
-    for (int idx = bitset__next_set_bit(inOutBitSet, 0); idx != -1; idx = bitset__next_set_bit(inOutBitSet, idx + 1)) {
-        xLabeled = g_slist_prepend(xLabeled, GINT_TO_POINTER(new int(idx)));
-    }
-    return xLabeled;
-}
-
-/**
- * @brief Returns a GSList of all arguments that are labeled in in the given labeling.
- * Lists created by this function must be freed with g_slist_free_full.
- * @param labeling The labeling in(L) shall be returned from.
- * @return A GSList of the arguments of in(L)
-*/
-GSList* getAllInLabeledArgs(struct Labeling* labeling){
-    //printf("getAllInLabeledArgs\n");
-    return getAllSetArgsFromBitSet(labeling->in);
-}
-
-
-/**
- * @brief Returns a GSList of all arguments that are labeled out in the given labeling.
- * Lists created by this function must be freed with g_slist_free_full.
- * @param labeling The labeling out(L) shall be returned from.
- * @return A GSList of the arguments of out(L)
-*/
-GSList* getAllOutLabeledArgs(struct Labeling* labeling){
-    //printf("getAllOutLabeledArgs\n");
-    return getAllSetArgsFromBitSet(labeling->out);
+    return isSelfAttacking;
 }
 
 
 
 /**
- * @brief Callback function for g_slist_free_full. 
- * This is neccessary if memory was allocated with new during the creation of the list.
- * @param data A pointer to the GSList that shall be fully freed
+ * @brief Returns a random index of a vector of the given length. Used to pick random arguments from vectors.
+ * @param vLength The length of the vector
+ * @return A random index of a vector of the given length
 */
-void deletePtr(gpointer data){
-    int* intPtr = (int*) data;
-    delete intPtr;
-}
-
-/**
- * @brief Utility function to print a GSList
- * @param list The list to be printed
-*/
-void printGSList(GSList* list){
-    if(list != NULL){
-        for (GSList *current = list; current != NULL; current = current->next){
-            int* currentIndex = (int*)current->data;
-            printf("%d -> ", *currentIndex);
-        }
-    }
-    printf("\n");
-}
-
-
-
-/**
- * @brief Returns a list of all attackers of in(L)
- * Lists created by this function must be freed with g_slist_free_full.
- * @param aaf
- * @param labeling // i don't think we need this
- * @return A GSList of all attackers of in(L)
-*/
-// GSList* getAllAttackersOfLINPrev(struct AAF *aaf, struct Labeling *labeling){ 
-//     //printf("getAllAttackersOfLIN\n");
-//     GSList* inL = getAllInLabeledArgs(labeling);
-//     if(inL != NULL){
-//         GSList* allInAttackers = getAllAttackersFromList(aaf, inL);
-//         return allInAttackers;
-//     }
-//     g_slist_free_full(inL, deletePtr);
-//     return NULL;
-// }
-
-
-GSList* getAllAttackersOfLIN(struct DefendedAgainst* defended){
-    return getAllSetArgsFromBitSet(defended->attacks);
-}
-
-
-/**
- * @brief Returns a random index of a list of the given length. Used to pick random arguments from lists.
- * @param listLength The length of the list
- * @return A random index of a list of the given length
-*/
-int getRandomIndex(int listLength){
+int getRandomIndex(int vLength){
     // seed random number generator with current time
-    // to get different random number sequences for the same listLengths
+    // to get different random number sequences for the same vLengths
     srand(static_cast<unsigned int>(time(nullptr)));
-    return rand() % listLength;
+    return rand() % vLength;
 }
 
 /**
- * @brief Returns a random argument of the given list.
- * @param list The list one random argument shall be picked out of.
- * @return A random argument of the given list.
+ * @brief Returns a random argument of the given vector.
+ * @param v The vector one random argument shall be picked out of.
+ * @return A random argument of the given vector.
 */
-int getRandomArgument(GSList* list){
-    if(list != NULL){
-        int listLength = g_slist_length(list);
-        ////printf("List length: %d\n", listLength);
-        int randomIndex = getRandomIndex(listLength);
-        ////printf("randomIndex: %d for list length: %d\n", randomIndex, listLength);
-        int randomArgument = *((int*)g_slist_nth_data(list, randomIndex));
-        ////printf("randomArgument: %d\n", randomArgument);
-        return randomArgument;
+
+int getRandomArgumentVector(const std::vector<int>& v){
+    if(!v.empty()){
+        int vLength = v.size();
+        int randomIndex = getRandomIndex(vLength);
+        return v[randomIndex];
     }
     return -1;
 }
