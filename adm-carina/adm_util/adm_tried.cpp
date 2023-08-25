@@ -7,14 +7,21 @@
 struct TriedArguments{
   struct BitSet *triedBs;
   struct BitSet *triedCs;
+  int numOfTriedArgs;
 };
 
 
 void adm__tried_init(struct TriedArguments* defended){
   defended->triedBs = (struct BitSet*) malloc(sizeof(struct BitSet));
   defended->triedCs = (struct BitSet*) malloc(sizeof(struct BitSet));
+  defended->numOfTriedArgs = 0;
 }
 
+void adm__tried_reset(struct TriedArguments* tried){
+  bitset__unsetAll(tried->triedBs);
+  bitset__unsetAll(tried->triedCs);
+  tried->numOfTriedArgs = 0;
+}
 /**
  * Returns the label of the given argument.
  */
@@ -33,16 +40,16 @@ void adm__triedB_set(struct TriedArguments* defended, int b){
 
 
 
-bool adm__alreadyTriedC(struct TriedArguments* defended, int c){
+bool adm__triedC_get(struct TriedArguments* defended, int c){
   if(bitset__get(defended->triedCs,c)){
         return YES;
   }else{
      return NO;}
 }
 
-void adm__excludeC(struct TriedArguments* defended, int c){
-  //printf("Now setting C: %d to tried\n", c);
-  bitset__set(defended->triedCs,c);
+void adm__triedC_set(struct TriedArguments* tried, int c){
+  bitset__set(tried->triedCs,c);
+  tried->numOfTriedArgs += 1;
   return;
 }
 
@@ -52,7 +59,7 @@ void adm__set_triedB_if_necessary(struct TriedArguments* tried, struct TempExclu
   bool allTempCsExcludedForTempB = true;
   for (GSList *current = bAttackers; current != NULL; current = current->next){
     int currentI = *((int*) current->data);
-    if(!adm__alreadyTriedC(tried, currentI)){
+    if(!adm__triedC_get(tried, currentI)){
       allCsTriedForB = false;
       //printf("we have not yet tried C: %d\n", currentI);
       //break;
@@ -63,8 +70,7 @@ void adm__set_triedB_if_necessary(struct TriedArguments* tried, struct TempExclu
   }
   if(allCsTriedForB){
     adm__triedB_set(tried, b);
-    // all tried Bs 
-    adm__excludeC(tried, b);
+    adm__triedC_set(tried, b);
   }
   if(allTempCsExcludedForTempB){
     adm__tempExcludeB_set(tempExcl, b);
@@ -73,22 +79,22 @@ void adm__set_triedB_if_necessary(struct TriedArguments* tried, struct TempExclu
   return;
 }
 
-void adm__triedC_set(struct TriedArguments* defended, struct AAF* aaf, int b, int c){
-  bitset__set(defended->triedCs,c);
-  GSList* bAttackers = aaf->parents[b];
-  bool allCsTriedForB = true;
-  for (GSList *current = bAttackers; current != NULL; current = current->next){
-    int currentI = *((int*) current->data);
-    if(!adm__alreadyTriedC(defended, currentI)){
-      allCsTriedForB = false;
-      break;
-    }
-  }
-  if(allCsTriedForB){
-    adm__triedB_set(defended, b);
-  }
-  return;
-}
+// void adm__triedC_set(struct TriedArguments* defended, struct AAF* aaf, int b, int c){
+//   bitset__set(defended->triedCs,c);
+//   GSList* bAttackers = aaf->parents[b];
+//   bool allCsTriedForB = true;
+//   for (GSList *current = bAttackers; current != NULL; current = current->next){
+//     int currentI = *((int*) current->data);
+//     if(!adm__triedC_get(defended, currentI)){
+//       allCsTriedForB = false;
+//       break;
+//     }
+//   }
+//   if(allCsTriedForB){
+//     adm__triedB_set(defended, b);
+//   }
+//   return;
+// }
 
 char* adm__triedC_print(struct TriedArguments* tried, struct AAF* aaf){
   int len = 100;
@@ -105,9 +111,9 @@ char* adm__triedC_print(struct TriedArguments* tried, struct AAF* aaf){
       strcpy(&str[sidx],aaf->ids2arguments[idx]);
       sidx += strlen(aaf->ids2arguments[idx]);
       str[sidx++] = '=';
-      if(adm__alreadyTriedC(tried,idx) == YES)
+      if(adm__triedC_get(tried,idx) == YES)
         str[sidx++] = 'Y';
-      else if(adm__alreadyTriedC(tried,idx) == NO)
+      else if(adm__triedC_get(tried,idx) == NO)
         str[sidx++] = 'N';
       else
         str[sidx++] = 'X';
@@ -117,9 +123,9 @@ char* adm__triedC_print(struct TriedArguments* tried, struct AAF* aaf){
       strcpy(&str[sidx],aaf->ids2arguments[idx]);
       sidx += strlen(aaf->ids2arguments[idx]);
       str[sidx++] = '=';
-      if(adm__alreadyTriedC(tried,idx) == YES)
+      if(adm__triedC_get(tried,idx) == YES)
         str[sidx++] = 'Y';
-      else if(adm__alreadyTriedC(tried,idx) == NO)
+      else if(adm__triedC_get(tried,idx) == NO)
         str[sidx++] = 'N';
       else
         str[sidx++] = 'X';

@@ -242,7 +242,7 @@ TEST(TestSetup, noneTried) {
     int numArgs = (aaf)->number_of_arguments;
     for(int i=0; i< numArgs; i++){
         EXPECT_FALSE(adm__triedB_get(tried, i));
-        EXPECT_FALSE(adm__alreadyTriedC(tried, i));
+        EXPECT_FALSE(adm__triedC_get(tried, i));
     }
     tearDown();
 }
@@ -258,10 +258,10 @@ TEST(labelIn, detachedArg) {
         int label = taas__lab_get_label(lab, i);
         if(i == arg){
             EXPECT_EQ(LAB_IN, label);
-            EXPECT_TRUE(adm__alreadyTriedC(tried, i));
+            EXPECT_TRUE(adm__triedC_get(tried, i));
         }else{
             EXPECT_EQ(LAB_UNDEC, label);
-            EXPECT_FALSE(adm__alreadyTriedC(tried, i));
+            EXPECT_FALSE(adm__triedC_get(tried, i));
         }
         EXPECT_FALSE(adm__defended_get(defended, i));
     }
@@ -278,7 +278,7 @@ TEST(labelIn, leafAttacking) {
         int label = taas__lab_get_label(lab, i);
         if(i == arg){
             EXPECT_EQ(LAB_IN, label);
-            EXPECT_TRUE(adm__alreadyTriedC(tried, i));
+            EXPECT_TRUE(adm__triedC_get(tried, i));
             EXPECT_FALSE(adm__defended_get(defended, i));
         }else if(i == 3){
             EXPECT_EQ(LAB_OUT, label);
@@ -302,13 +302,13 @@ TEST(labelIn, attackedLeaf) {
         int label = taas__lab_get_label(lab, i);
         if(i == arg){
             EXPECT_EQ(LAB_IN, label);
-            EXPECT_TRUE(adm__alreadyTriedC(tried, i));
+            EXPECT_TRUE(adm__triedC_get(tried, i));
         }else if(i == 3){
             EXPECT_EQ(LAB_OUT, label);
-            EXPECT_FALSE(adm__alreadyTriedC(tried, i));
+            EXPECT_FALSE(adm__triedC_get(tried, i));
         }else{
             EXPECT_EQ(LAB_UNDEC, label);
-            EXPECT_FALSE(adm__alreadyTriedC(tried, i));
+            EXPECT_FALSE(adm__triedC_get(tried, i));
         }
         EXPECT_FALSE(adm__defended_get(defended, i));
     }
