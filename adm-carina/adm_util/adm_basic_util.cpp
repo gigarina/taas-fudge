@@ -80,9 +80,6 @@ bool isCSelfAttacking(struct AAF* aaf, struct TempExclude* tempExcl, int c){
  * @return A random index of a vector of the given length
 */
 int getRandomIndex(int vLength){
-    // seed random number generator with current time
-    // to get different random number sequences for the same vLengths
-    srand(static_cast<unsigned int>(time(nullptr)));
     return rand() % vLength;
 }
 
@@ -99,6 +96,16 @@ int getRandomArgumentVector(const std::vector<int>& v){
         return v[randomIndex];
     }
     return -1;
+}
+
+/**
+ * @brief Callback function for g_slist_free_full. 
+ * This is neccessary if memory was allocated with new during the creation of the list.
+ * @param data A pointer to the GSList that shall be fully freed
+*/
+void deletePtr(gpointer data){
+    int* intPtr = (int*) data;
+    delete intPtr;
 }
 
 

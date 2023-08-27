@@ -71,7 +71,7 @@ int adm__solve(int argc, char *argv[], struct SolverInformation* info){
 		// Solve the Problem with solve_dcadm
 		solve_dcadm(task,aaf);
 
-		taas__aaf_destroy(aaf);
+		taas__aaf_destroy(aaf);//TODO only do if task is dc-co or dc-pr?
 	}
 	taas__solverinformation_destroy(info);
 	taas__cmd_destroy(task);
