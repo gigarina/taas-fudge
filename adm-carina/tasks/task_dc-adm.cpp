@@ -15,11 +15,26 @@ Description : solve function for DC-ADM
 #include <list>
 #include <glib.h>
 
+void printUndefendedChildren(std::vector<int> undefendedChildren){
+    printf("Nodes              : ");
+    for(int i=0; i< undefendedChildren.size(); i++){
+        printf("%d, ", i);
+    }
+    printf("\n");
+    printf("Undefended children: ");
+    for(int i=0; i< undefendedChildren.size(); i++){
+        printf("%d, ", undefendedChildren[i]);
+    }
+    printf("\n");
+}
+
 bool isUndefendedAttacker(struct InLRelation* inLRel, struct Labeling* labeling, int x){
     return adm__inLRel_defended_get(inLRel, x) == NO && adm__inLRel_attacks_get(inLRel, x) == YES;
 }
 
-void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, std::vector<int> undefendedChildren, GSList* node, struct Labeling* labeling){
+std::vector<int> countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, GSList* node, struct Labeling* labeling){
+    std::vector<int> undefendedChildren;
+            undefendedChildren.resize(aaf->number_of_arguments, 0);
     int nodeIdx = *((int*) node->data);
     std::vector<bool> visited;
     visited.resize(aaf->number_of_arguments, false);
@@ -34,8 +49,9 @@ void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, std::
         for (GSList *child = aaf->children[nodeIdx]; child != NULL; child = child->next){
             int childIdx = *((int*) child->data);
             if(isUndefendedAttacker(inLRel, labeling, childIdx)){
-                ++undefendedChildren[nodeIdx];
-                printf(" %d is an undefended child of %d\n", childIdx, nodeIdx);
+                //printf(" %d is an undefended child of %d, this should be the new value: %d \n", childIdx, nodeIdx, undefendedChildren[nodeIdx] + 1);
+                undefendedChildren[nodeIdx] = undefendedChildren[nodeIdx] + 1;
+                //printf("This is the value: %d\n", undefendedChildren[nodeIdx]);
                 //g_hash_table_replace(undefendedChildren, GINT_TO_POINTER(new int(nodeIdx)), GINT_TO_POINTER(new int(++currentVal)));
             }
             if(!visited[childIdx]){
@@ -52,6 +68,7 @@ void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, std::
             }
         }
     }
+    return undefendedChildren;
     
     // if(node == NULL){
     //     return 0;
@@ -109,7 +126,9 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TempExc
     if(b != -1){
           GSList* bAttackers = aaf->parents[b];
           if(bAttackers != NULL){
-            countUndefendedAttackers(aaf, inLRel,undefendedChildren, bAttackers, labeling);
+            //printUndefendedChildren(undefendedChildren);
+            undefendedChildren = countUndefendedAttackers(aaf, inLRel, bAttackers, labeling);
+            //printUndefendedChildren(undefendedChildren);
             std::vector<int> conflictFreeAttackers;
             conflictFreeAttackers.reserve(g_slist_length(bAttackers));
             int maxUndefendedChildren = 0;
@@ -119,18 +138,26 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TempExc
                 int selfAttacking = isCSelfAttacking(aaf, tempExcl, currentI);
                 bool alreadyTried = adm__tempExcludeC_get(tempExcl, currentI); // TODO delete is obsolete.
                 if(currentLabel == LAB_UNDEC && !selfAttacking && adm__tempExcludeC_get(tempExcl, currentI)== NO){ // if it's not out it is not in conflict with in(L)
+                    conflictFreeAttackers.push_back(currentI);
                     int numUndefendedChildren = undefendedChildren[currentI];
                     if(numUndefendedChildren > maxUndefendedChildren){
                         maxUndefendedChildren = numUndefendedChildren;
-                        conflictFreeAttackers.clear();
-                    }
-                    if(numUndefendedChildren == maxUndefendedChildren){
-                        conflictFreeAttackers.push_back(currentI);
+                        // conflictFreeAttackers.clear();
+                    // }
+                    // if(numUndefendedChildren == maxUndefendedChildren){
+                    //     conflictFreeAttackers.push_back(currentI);
                     }
                 }
             }
            if(!conflictFreeAttackers.empty()){
-                int c = getRandomArgumentVector(conflictFreeAttackers);
+                std::vector<int> conflictFreeAttackersPrio;
+                for(int i=0; i < conflictFreeAttackers.size(); i++){
+                    int cCandidate = conflictFreeAttackers[i];
+                    if(undefendedChildren[cCandidate] == maxUndefendedChildren){
+                        conflictFreeAttackersPrio.push_back(cCandidate);
+                    }
+                }
+                int c = getRandomArgumentVector(conflictFreeAttackersPrio);
                 return c;
             }
           }
@@ -286,10 +313,10 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
             
             // printf("B: %d\n", b);
             // c is attacker of b, c is not in conflict with in(L)
-            printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
+            //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
             int c = findCFirst(aaf, labeling, b, tempExcl, undefendedChildren, inLRel); 
              //printHashTableValues(undefendedChildren);
-             printf("C: %d\n", c);
+             //printf("C: %d\n", c);
             
             if (c == -1){ // no c found
                 if(b != -1){
