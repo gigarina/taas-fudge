@@ -19,7 +19,7 @@ bool isUndefendedAttacker(struct InLRelation* inLRel, struct Labeling* labeling,
     return adm__inLRel_defended_get(inLRel, x) == NO && adm__inLRel_attacks_get(inLRel, x) == YES;
 }
 
-void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, GHashTable* undefendedChildren, GSList* node, struct Labeling* labeling){
+void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, std::vector<int> undefendedChildren, GSList* node, struct Labeling* labeling){
     int nodeIdx = *((int*) node->data);
     std::vector<bool> visited;
     visited.resize(aaf->number_of_arguments, false);
@@ -34,9 +34,9 @@ void countUndefendedAttackers(struct AAF* aaf, struct InLRelation* inLRel, GHash
         for (GSList *child = aaf->children[nodeIdx]; child != NULL; child = child->next){
             int childIdx = *((int*) child->data);
             if(isUndefendedAttacker(inLRel, labeling, childIdx)){
-                int currentVal = *((int*)g_hash_table_lookup(undefendedChildren, &nodeIdx));
-                //printf(" %d is an undefended child of %d\n", childIdx, nodeIdx);
-                g_hash_table_replace(undefendedChildren, GINT_TO_POINTER(new int(nodeIdx)), GINT_TO_POINTER(new int(++currentVal)));
+                ++undefendedChildren[nodeIdx];
+                printf(" %d is an undefended child of %d\n", childIdx, nodeIdx);
+                //g_hash_table_replace(undefendedChildren, GINT_TO_POINTER(new int(nodeIdx)), GINT_TO_POINTER(new int(++currentVal)));
             }
             if(!visited[childIdx]){
                 visited[childIdx] = true;
@@ -105,7 +105,7 @@ int findBFirst(struct AAF* aaf, struct Labeling* labeling, struct InLRelation* i
  * @return An argument that attacks b and is not in conflict with in(L). If there is no such argument returns -1.
 */
 
-int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TempExclude* tempExcl, GHashTable* undefendedChildren, InLRelation* inLRel){
+int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TempExclude* tempExcl, std::vector<int> undefendedChildren, InLRelation* inLRel){
     if(b != -1){
           GSList* bAttackers = aaf->parents[b];
           if(bAttackers != NULL){
@@ -119,7 +119,7 @@ int findCFirst(struct AAF *aaf, struct Labeling *labeling, int b, struct TempExc
                 int selfAttacking = isCSelfAttacking(aaf, tempExcl, currentI);
                 bool alreadyTried = adm__tempExcludeC_get(tempExcl, currentI); // TODO delete is obsolete.
                 if(currentLabel == LAB_UNDEC && !selfAttacking && adm__tempExcludeC_get(tempExcl, currentI)== NO){ // if it's not out it is not in conflict with in(L)
-                    int numUndefendedChildren = *((int*) g_hash_table_lookup(undefendedChildren, current->data));
+                    int numUndefendedChildren = undefendedChildren[currentI];
                     if(numUndefendedChildren > maxUndefendedChildren){
                         maxUndefendedChildren = numUndefendedChildren;
                         conflictFreeAttackers.clear();
@@ -280,28 +280,27 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
         {   
             // b is attacker of in(L) that in(L) doesn't attack
             int b = findBFirst(aaf, labeling, inLRel, tempExcl);
-            GHashTable* undefendedChildren = (GHashTable*) g_hash_table_new_full(g_int_hash, g_int_equal, deletePtr, deletePtr);
-            for(int i=0; i< aaf->number_of_arguments; i++){
-                //GSList* children = aaf->children[i];
-                g_hash_table_insert(undefendedChildren, GINT_TO_POINTER(new int(i)), GINT_TO_POINTER(new int(0)));
-            }
+            //GHashTable* undefendedChildren = (GHashTable*) g_hash_table_new_full(g_int_hash, g_int_equal, deletePtr, deletePtr);
+            std::vector<int> undefendedChildren;
+            undefendedChildren.resize(aaf->number_of_arguments, 0);
+            
             // printf("B: %d\n", b);
             // c is attacker of b, c is not in conflict with in(L)
-            //printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
+            printf("%s\n", taas__lab_print_as_labeling(labeling, aaf)); 
             int c = findCFirst(aaf, labeling, b, tempExcl, undefendedChildren, inLRel); 
              //printHashTableValues(undefendedChildren);
-             //printf("C: %d\n", c);
+             printf("C: %d\n", c);
             
             if (c == -1){ // no c found
                 if(b != -1){
                     adm__tempExcludeB_set(tempExcl, b); // TODO This is useless we set it and delete it again
                 }
-                g_hash_table_destroy(undefendedChildren);
+                //g_hash_table_destroy(undefendedChildren);
                 break; // start a new try
             }else{
                 // add c to in(L)
                 labelCIn(aaf, labeling, inLRel, tempExcl, c, b);//, undefendedChildren);
-                g_hash_table_destroy(undefendedChildren);
+                //g_hash_table_destroy(undefendedChildren);
             }  
             
         }
