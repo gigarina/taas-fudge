@@ -70,6 +70,18 @@ void adm__inLRel_defended_set(struct InLRelation* inLRel, int arg, int label){
 }
 
 /**
+ * @brief Returns the attack status of the given argument.
+ * @param inLRel
+ * @param arg The argument the attack status shall be returned for.
+ * @return YES if arg is defended, NO otherwise.
+ */
+int adm__inLRel_attacks_get(struct InLRelation* inLRel, int arg){
+    if(bitset__get(inLRel->attacks,arg))
+        return YES;
+    else return NO;
+}
+
+/**
  * @brief Sets the attack status of the given argument to the given status.
  * @param inLRel
  * @param arg
