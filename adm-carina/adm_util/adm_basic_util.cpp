@@ -37,38 +37,14 @@ bool adm__isAdmissible(struct InLRelation* inLRel, struct Labeling* lab){
 }
 
 
-
-void adm__set_triedB_if_necessary(struct AAF* aaf, struct TempExclude* tempExcl, int b){
-  GSList* bAttackers = aaf->parents[b];
-  bool allTempCsExcludedForTempB = true;
-  for (GSList *current = bAttackers; current != NULL; current = current->next){
-    int currentI = *((int*) current->data);
-    if(!adm__tempExcludeC_get(tempExcl, currentI)){
-      allTempCsExcludedForTempB = false;
-      break;
-    }
-  }
-  if(allTempCsExcludedForTempB){
-    adm__tempExcludeB_set(tempExcl, b);
-    adm__tempExcludeC_set(tempExcl, b);
-  }
-  return;
-}
-
-
 /**
- * @brief Returns if the given C is self-attacking and 
- * sets triedArguments and TempExclude accordingly.
+ * @brief Returns if the given C is self-attacking
  * @param aaf
- * @param tried
  * @param c
  * @return True if c is self attacking, false otherwise.
 */
-bool isCSelfAttacking(struct AAF* aaf, struct TempExclude* tempExcl, int c){
+bool isCSelfAttacking(struct AAF* aaf, int c){
     bool isSelfAttacking = (bool) bitset__get(aaf->loops, c);
-    if(isSelfAttacking){
-        adm__tempExcludeC_set(tempExcl, c);   
-    }
     return isSelfAttacking;
 }
 

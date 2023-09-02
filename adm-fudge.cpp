@@ -45,7 +45,6 @@ Description : The adm-fudge solver for abstract argumentation.
 #include "taas/taas_inout.c"
 #include "taas/taas_labeling.c"
 #include "adm-carina/adm_util/adm_defended.cpp"
-#include "adm-carina/adm_util/adm_temp_exclude.cpp"
 #include "adm-carina/adm_util/adm_basic_util.cpp"
 #include "adm-carina/adm_util/adm_setup_util.cpp"
 

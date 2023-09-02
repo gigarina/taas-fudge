@@ -47,23 +47,6 @@ struct InLRelation* createInLRelForAAF(struct AAF* aaf){
 
     return inLRel;
 }
-/**
- * @brief Creates and initializes a InLRelation struct for the given aaf
- * @param aaf The AAF that the InLRelation struct shall be created for
- * @return A pointer to the created InLRelation struct.
-*/
-struct TempExclude* createTempExcludeForAAF(struct AAF* aaf){
-    //printf("createInLRelForAAF\n");
-    struct TempExclude *tempExcl;
-    tempExcl = (struct TempExclude *)malloc(sizeof(struct TempExclude));
-    adm__tempExcl_init(tempExcl);
-    bitset__init(tempExcl->tempExcludeB, aaf->number_of_arguments);
-    bitset__unsetAll(tempExcl->tempExcludeB);
-    bitset__init(tempExcl->tempExcludeC, aaf->number_of_arguments);
-    bitset__unsetAll(tempExcl->tempExcludeC);
-
-    return tempExcl;
-}
 
 /* ============================================================================================================== */
 /* == END FILE ================================================================================================== */
