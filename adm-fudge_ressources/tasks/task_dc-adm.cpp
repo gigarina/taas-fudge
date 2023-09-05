@@ -119,6 +119,10 @@ bool solve_dcadm(struct TaskSpecification *task, struct AAF *aaf, bool do_print 
     // Element a
     int a = task->arg;
     
+    // seed random number generator with current time
+    // to get different random number sequences
+    srand(static_cast<unsigned int>(time(nullptr)));
+
     int MAX_IT = 1000 * aaf->number_of_arguments;
     for (int i = 0; i < MAX_IT; i++){  
         // Setup all structures needed for deciding DC-ADM
