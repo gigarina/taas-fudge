@@ -67,9 +67,12 @@ int adm__solve(int argc, char *argv[], struct SolverInformation* info){
 		if(task->format != NULL && strcmp(task->format,"tgf") == 0)
 			taas__readFile_tgf(task->file,aaf);
 		taas__update_arg_param(task,aaf);
-		// Solve the Problem with solve_dcadm
-		solve_dcadm(task,aaf);
-
+		if(strcmp(task->track,"DC-CO") == 0 || strcmp(task->track,"DC-PR") == 0){
+			// Solve the Problem with solve_dcadm
+			solve_dcadm(task,aaf);
+		}else{
+			printf("This solver doesn't support the problem you entered. \nPlease enter 'DC-CO' or 'DC-PR' as problems.\n");
+		}
 		taas__aaf_destroy(aaf);
 	}
 	taas__solverinformation_destroy(info);

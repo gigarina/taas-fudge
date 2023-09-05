@@ -56,9 +56,6 @@ bool isCSelfAttacking(struct AAF* aaf, int c){
  * @return A random index of a vector of the given length
 */
 int getRandomIndex(int vLength){
-    // seed random number generator with current time
-    // to get different random number sequences for the same vLengths
-    srand(static_cast<unsigned int>(time(nullptr)));
     return rand() % vLength;
 }
 
